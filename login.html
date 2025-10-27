@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Your Website</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/auth.css">
+</head>
+<body>
+  <div class="auth-container">
+    <!-- Background Carousel -->
+    <div class="auth-background">
+      <div class="carousel-item active">
+        <img src="/assets/img/image1.jpg" alt="Login Background">
+        <div class="carousel-container">
+          <!-- Optional: Add content here if needed -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Login Form -->
+    <div class="auth-box">
+      <div class="auth-header">
+        <h1>Welcome Back</h1>
+        <p>Login to your account</p>
+      </div>
+
+      <div class="error-message" id="errorMessage">
+        <!-- Error message will be displayed here -->
+      </div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="usernameOrEmail">Username or Email</label>
+          <input type="text" id="usernameOrEmail" name="usernameOrEmail" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required>
+          <div class="forgot-password">
+            <a href="forgot-password.html">Forgot Password?</a>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit">Login</button>
+      </form>
+
+      <div class="auth-footer">
+        Don't have an account? <a href="signup.html">Sign up here</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/auth.js"></script>
+  <script>
+    const form = document.getElementById('loginForm');
+    const usernameOrEmail = document.getElementById('usernameOrEmail');
+    const password = document.getElementById('password');
+    const errorMessage = document.getElementById('errorMessage');
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      // Validate form fields
+      const fields = [
+        { value: usernameOrEmail.value.trim(), name: 'Username or Email', errorElement: errorMessage },
+        { value: password.value, name: 'Password', errorElement: errorMessage }
+      ];
+
+      if (!FormValidator.validateFormFields(fields)) {
+        return;
+      }
+
+      // Attempt login
+      const result = AuthManager.loginUser(
+        usernameOrEmail.value.trim(),
+        password.value
+      );
+
+      if (result.success) {
+        // Redirect to index.html
+        window.location.href = '../index.html';
+      } else {
+        // Show error message
+        FormValidator.showError(errorMessage, result.message);
+      }
+    });
+
+    // Hide error message when user starts typing
+    usernameOrEmail.addEventListener('input', function() {
+      FormValidator.hideError(errorMessage);
+    });
+
+    password.addEventListener('input', function() {
+      FormValidator.hideError(errorMessage);
+    });
+
+    // Check if user is already logged in
+    if (AuthManager.isLoggedIn()) {
+      window.location.href = '../index.html';
+    }
+  </script>
+</body>
+</html>
