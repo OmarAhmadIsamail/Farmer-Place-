@@ -1,4 +1,4 @@
-// Cart Page Functionality - Fixed Delete Issue
+// Cart Page Functionality - Updated for Guest Checkout
 class CartPage {
     constructor() {
         this.init();
@@ -188,7 +188,6 @@ class CartPage {
         }
     }
 
-    // ... rest of your existing methods (calculateDeliveryFee, calculateDiscount, etc.)
     calculateDeliveryFee(subtotal) {
         const selectedOption = document.querySelector('input[name="deliveryOption"]:checked');
         
@@ -318,20 +317,41 @@ class CartPage {
         }, 3000);
     }
 
+    // Proceed to checkout - Updated version for guest checkout
     proceedToCheckout() {
-        if (!window.cartManager) return;
-
         const cart = window.cartManager.getCart();
         
         if (cart.length === 0) {
-            alert('Your cart is empty. Please add some items before checkout.');
+            alert('Your cart is empty. Please add items before checkout.');
             return;
         }
-
-        const total = document.getElementById('total');
-        const itemCount = window.cartManager.getTotalItems();
         
-        alert(`Proceeding to checkout with ${itemCount} items. Total: ${total ? total.textContent : '$0.00'}\n\nThis would redirect to a secure checkout page in a real application.`);
+        // Save delivery option
+        const deliveryOption = document.querySelector('input[name="deliveryOption"]:checked');
+        if (deliveryOption) {
+            localStorage.setItem('deliveryOption', deliveryOption.value);
+        } else {
+            // Default to standard delivery if no option selected
+            localStorage.setItem('deliveryOption', 'standard');
+        }
+        
+        // Save promo code if applied
+        const promoCode = document.getElementById('promo-code');
+        if (promoCode && promoCode.value.trim()) {
+            localStorage.setItem('appliedPromoCode', promoCode.value.trim().toUpperCase());
+        } else {
+            localStorage.removeItem('appliedPromoCode');
+        }
+        
+        // Save cart total for checkout page
+        const totalEl = document.getElementById('total');
+        if (totalEl) {
+            const totalValue = parseFloat(totalEl.textContent.replace('$', ''));
+            localStorage.setItem('checkoutTotal', totalValue.toFixed(2));
+        }
+        
+        // Redirect to checkout page
+        window.location.href = 'checkout.html';
     }
 }
 

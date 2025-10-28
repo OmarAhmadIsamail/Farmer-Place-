@@ -1,90 +1,119 @@
-// Common authentication functions
-class AuthManager {
-    static registerUser(userData) {
-      // Store user data in sessionStorage
-      sessionStorage.setItem('registeredUser', JSON.stringify(userData));
-      return true;
-    }
+// ================================
+// AUTH.JS (FRONTEND-ONLY VERSION)
+// ================================
+
+// --- Helper functions ---
+function saveUser(email, password) {
+    localStorage.setItem('user', JSON.stringify({ email, password }));
+  }
   
-    static getRegisteredUser() {
-      const userData = sessionStorage.getItem('registeredUser');
-      return userData ? JSON.parse(userData) : null;
-    }
+  function getUser() {
+    return JSON.parse(localStorage.getItem('user'));
+  }
   
-    static loginUser(usernameOrEmail, password) {
-      const registeredUser = this.getRegisteredUser();
-      
-      if (!registeredUser) {
-        return { success: false, message: 'No account found. Please sign up first.' };
+  function saveSession(email) {
+    localStorage.setItem('loggedInUser', email);
+  }
+  
+  function getSession() {
+    return localStorage.getItem('loggedInUser');
+  }
+  
+  function clearSession() {
+    localStorage.removeItem('loggedInUser');
+  }
+  
+  // ========================
+  // SIGNUP HANDLER
+  // ========================
+  const signupForm = document.getElementById('signupForm');
+  if (signupForm) {
+    signupForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+  
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const confirmPassword = document.getElementById('confirmPassword').value.trim();
+  
+      if (!email || !password || !confirmPassword) {
+        alert('Please fill in all fields');
+        return;
       }
   
-      const isUsernameMatch = usernameOrEmail === registeredUser.username;
-      const isEmailMatch = usernameOrEmail === registeredUser.email;
-      const isPasswordMatch = password === registeredUser.password;
+      if (password !== confirmPassword) {
+        alert('Passwords do not match');
+        return;
+      }
   
-      if ((isUsernameMatch || isEmailMatch) && isPasswordMatch) {
-        // Store logged in user info
-        sessionStorage.setItem('loggedInUser', JSON.stringify({
-          username: registeredUser.username,
-          email: registeredUser.email
-        }));
-        return { success: true };
+      const existingUser = getUser();
+      if (existingUser && existingUser.email === email) {
+        alert('User already exists. Please log in.');
+        window.location.href = 'login.html';
+        return;
+      }
+  
+      saveUser(email, password);
+      alert('Account created successfully! Please log in.');
+      window.location.href = 'login.html'; // Redirect to login page after signup
+    });
+  }
+  
+  // ========================
+  // LOGIN HANDLER
+  // ========================
+  const loginForm = document.getElementById('loginForm');
+  if (loginForm) {
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+  
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+  
+      if (!email || !password) {
+        alert('Please fill in all fields');
+        return;
+      }
+  
+      const savedUser = getUser();
+  
+      if (savedUser && savedUser.email === email && savedUser.password === password) {
+        saveSession(email);
+        alert('Login successful!');
+        window.location.href = '../index.html';
       } else {
-        return { success: false, message: 'Invalid username/email or password' };
+        alert('Incorrect email or password');
       }
-    }
-  
-    static isLoggedIn() {
-      return sessionStorage.getItem('loggedInUser') !== null;
-    }
-  
-    static getCurrentUser() {
-      const userData = sessionStorage.getItem('loggedInUser');
-      return userData ? JSON.parse(userData) : null;
-    }
-  
-    static logout() {
-      sessionStorage.removeItem('loggedInUser');
-    }
-  
-    static validateEmail(email) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return emailRegex.test(email);
-    }
-  
-    static validatePassword(password) {
-      return password.length >= 6;
-    }
-  
-    static validateUsername(username) {
-      const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
-      return usernameRegex.test(username);
-    }
+    });
   }
   
-  // Form validation utilities
-  class FormValidator {
-    static showError(element, message) {
-      element.textContent = message;
-      element.classList.add('show');
+  // ========================
+  // LOGOUT HANDLER
+  // ========================
+  document.addEventListener('click', (e) => {
+    if (e.target.matches('#logoutBtn')) {
+      e.preventDefault();
+      clearSession();
+      alert('You have logged out');
+      window.location.href = '../auth/login.html';
+    }
+  });
+  
+  // ========================
+  // PAGE PROTECTION
+  // ========================
+  (function () {
+    const protectedPages = ['checkout.html', 'cart.html'];
+    const currentPage = window.location.pathname.split('/').pop();
+    const session = getSession();
+  
+    // Redirect if not logged in
+    if (protectedPages.includes(currentPage) && !session) {
+      window.location.href = '../auth/login.html';
     }
   
-    static hideError(element) {
-      element.classList.remove('show');
+    // Redirect if already logged in and trying to go to login or signup
+    if ((currentPage === 'login.html' || currentPage === 'signup.html') && session) {
+      window.location.href = '../index.html';
     }
+  })();
   
-    static validateFormFields(fields) {
-      let isValid = true;
-      
-      for (const field of fields) {
-        if (!field.value.trim()) {
-          this.showError(field.errorElement, `${field.name} is required`);
-          isValid = false;
-        } else {
-          this.hideError(field.errorElement);
-        }
-      }
-      
-      return isValid;
-    }
-  }

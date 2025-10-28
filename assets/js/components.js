@@ -1,3 +1,5 @@
+// assets/js/components.js
+
 class ComponentLoader {
     constructor() {
         this.components = {};
@@ -36,6 +38,9 @@ class ComponentLoader {
             case 'header':
                 this.initHeader();
                 break;
+            case 'footer':
+                this.initFooter();
+                break;
             // Add more cases for other components
         }
     }
@@ -50,6 +55,36 @@ class ComponentLoader {
         
         // Initialize dropdown functionality
         this.initDropdowns();
+    }
+
+    // Initialize footer functionality
+    initFooter() {
+        // You can add footer-specific initialization here
+        // For example: current year in copyright, social media links, etc.
+        this.updateCopyrightYear();
+        this.initSocialLinks();
+    }
+
+    // Update copyright year dynamically
+    updateCopyrightYear() {
+        const copyrightElements = document.querySelectorAll('.copyright span:first-child');
+        const currentYear = new Date().getFullYear();
+        
+        copyrightElements.forEach(element => {
+            if (element.textContent.includes('Copyright')) {
+                element.textContent = `© ${currentYear} Copyright`;
+            }
+        });
+    }
+
+    // Initialize social media links
+    initSocialLinks() {
+        const socialLinks = document.querySelectorAll('.social-links a');
+        
+        socialLinks.forEach(link => {
+            link.setAttribute('target', '_blank');
+            link.setAttribute('rel', 'noopener noreferrer');
+        });
     }
 
     // Update active navigation link
@@ -111,6 +146,14 @@ class ComponentLoader {
         );
         await Promise.all(loadPromises);
     }
+
+    // Load all common components (header and footer)
+    async loadCommonComponents() {
+        await this.loadComponents([
+            { name: 'header', target: 'header-container' },
+            { name: 'footer', target: 'footer-container' }
+        ]);
+    }
 }
 
 // Create global instance
@@ -118,6 +161,6 @@ window.componentLoader = new ComponentLoader();
 
 // Auto-load components when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    // Load header into element with id 'header-container'
-    componentLoader.loadComponent('header', 'header-container');
+    // Load both header and footer
+    componentLoader.loadCommonComponents();
 });

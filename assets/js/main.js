@@ -148,6 +148,12 @@
    * Enhanced Add to Cart Function
    */
   function addToCart(productName, productPrice, productId, productCategory, productImage, productWeight) {
+    // Check if user is authenticated
+    if (typeof Auth !== 'undefined' && !Auth.isAuthenticated()) {
+      window.location.href = './auth/login.html';
+      return;
+    }
+
     let cart = JSON.parse(localStorage.getItem('cart')) || [];
     
     // Check if product already in cart
@@ -175,6 +181,11 @@
    * Cart functionality for all pages
    */
   function initializeCart() {
+    // Only initialize cart if user is authenticated
+    if (typeof Auth !== 'undefined' && !Auth.isAuthenticated()) {
+      return;
+    }
+
     function updateCartCounter() {
       const cart = JSON.parse(localStorage.getItem('cart')) || [];
       const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
