@@ -145,6 +145,19 @@
   }
 
   /**
+   * Blog navigation in header
+   */
+  function setupBlogNavigation() {
+    // Add blog link to navigation if it doesn't exist
+    const navMenu = document.querySelector('#navmenu ul');
+    if (navMenu && !document.querySelector('a[href="blog.html"]')) {
+      const blogLink = document.createElement('li');
+      blogLink.innerHTML = '<a href="blog.html">Blog</a>';
+      navMenu.appendChild(blogLink);
+    }
+  }
+
+  /**
    * Enhanced Add to Cart Function
    */
   function addToCart(productName, productPrice, productId, productCategory, productImage, productWeight) {
@@ -304,11 +317,15 @@
     }
   }
 
-  // Initialize products filter and cart functionality when DOM is loaded
+  // Initialize all functionality when DOM is loaded
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initProductsFilterAndCart);
+    document.addEventListener('DOMContentLoaded', function() {
+      initProductsFilterAndCart();
+      setupBlogNavigation(); // Add blog navigation setup
+    });
   } else {
     initProductsFilterAndCart();
+    setupBlogNavigation(); // Add blog navigation setup
   }
 
 })();

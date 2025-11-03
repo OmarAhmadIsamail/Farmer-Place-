@@ -755,7 +755,7 @@ section,
   align-items: center;
   flex-direction: column;
   z-index: 3;
-  text-align: center; /* Add this for text alignment */
+  text-align: center; 
 }
 
 .hero .btn-get-started:hover {
