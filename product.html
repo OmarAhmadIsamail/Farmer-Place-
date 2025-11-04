@@ -1,15 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<!DOCTYPE html>
-<html lang="en">
-
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>Index - EstateAgency Bootstrap Template</title>
-  <meta name="description" content="">
-  <meta name="keywords" content="">
+  <title>Marketplace - Fresh Farm Products</title>
+  <meta name="description" content="Buy fresh fruits, vegetables, meat, and farming equipment">
+  <meta name="keywords" content="farm, marketplace, fruits, vegetables, organic, fresh">
 
   <!-- Favicons -->
   <link href="assets/img/favicon.png" rel="icon">
@@ -36,23 +33,6 @@
   <!-- Header will be loaded here -->
   <div id="header-container"></div>
 
-  <!-- Your page content here -->
-  <main>
-    <!-- Page specific content -->
-  </main>
-
-  <!-- Component Loader Script -->
-  <script src="assets/js/components.js"></script>
-  
-  <!-- Your existing scripts -->
-  <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="assets/vendor/aos/aos.js"></script>
-  <script src="assets/vendor/swiper/swiper-bundle.min.js"></script>
-  <script src="assets/js/main.js"></script>
-
-</body>
-</html>
-
   <main class="main">
 
     <!-- Page Title -->
@@ -61,7 +41,8 @@
         <div class="container">
           <div class="row d-flex justify-content-center text-center">
             <div class="col-lg-8">
-              <h1>Marke Place</h1>
+              <h1>Farmers Market</h1>
+              <p class="mb-0">Fresh produce directly from local farms</p>
             </div>
           </div>
         </div>
@@ -70,217 +51,60 @@
         <div class="container">
           <ol>
             <li><a href="index.html">Home</a></li>
-            <li class="current">Properties</li>
+            <li class="current">Marketplace</li>
           </ol>
         </div>
       </nav>
     </div><!-- End Page Title -->
 
-        <!-- Products Section -->
-        <section id="products" class="products section">
+    <!-- Products Section -->
+    <section id="products" class="products section">
+      <div class="container">
 
-          <div class="container">
-  
+        <!-- Search Bar -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="search-container" data-aos="fade-up">
+              <div class="search-box">
+                <input type="text" id="product-search" class="form-control" placeholder="Search for products...">
+                <i class="bi bi-search search-icon"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Filter Buttons -->
-
-       <div class="row mb-4">
-       <div class="col-12">
-         <div class="filter-buttons text-center" data-aos="fade-up">
-                <button class="filter-btn active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="fruit">Fruits</button>
-                <button class="filter-btn" data-filter="vegetable">Vegetables</button>
-                <button class="filter-btn" data-filter="equipment">Equipment</button>
-               <button class="filter-btn" data-filter="meat">Meat</button>
-    </div>
-  </div>
-</div>
-
-<div class="row gy-4 products-container">
-
-  <div class="col-xl-4 col-md-6 product-item" data-category="fruit" data-aos="fade-up" data-aos-delay="100">
-    <div class="card">
-      <img src="assets/img/products/product-1.jpg" alt="Fresh Apples" class="img-fluid">
-      <div class="card-body">
-        <span class="product-category">Fruit | $12.00</span>
-        <h3><a href="product-details.html?product=fresh-apples" class="stretched-link">Fresh Organic Apples</a></h3>
-        <div class="card-content">
-          <div class="product-info">
-            <div class="info-item">
-              <span class="info-label">Weight</span>
-              <span class="info-value">1kg</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Origin</span>
-              <span class="info-value">Local</span>
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="filter-buttons text-center" data-aos="fade-up">
+              <button class="filter-btn active" data-filter="all">All Products</button>
+              <button class="filter-btn" data-filter="fruit">Fruits</button>
+              <button class="filter-btn" data-filter="vegetable">Vegetables</button>
+              <button class="filter-btn" data-filter="equipment">Equipment</button>
+              <button class="filter-btn" data-filter="meat">Meat</button>
             </div>
           </div>
-          <button class="add-to-cart-btn" 
-                  data-product-id="fresh-apples" 
-                  data-product-name="Fresh Organic Apples" 
-                  data-price="12.00">
-            <i class="bi bi-cart-plus"></i> Add to Cart
-          </button>
         </div>
-      </div>
-    </div>
-  </div><!-- End Product Item -->
 
-  <div class="col-xl-4 col-md-6 product-item" data-category="vegetable" data-aos="fade-up" data-aos-delay="200">
-    <div class="card">
-      <img src="assets/img/products/product-2.jpg" alt="Fresh Carrots" class="img-fluid">
-      <div class="card-body">
-        <span class="product-category">Vegetable | $8.50</span>
-        <h3><a href="product-details.html?product=organic-carrots" class="stretched-link">Organic Carrots</a></h3>
-        <div class="card-content">
-          <div class="product-info">
-            <div class="info-item">
-              <span class="info-label">Weight</span>
-              <span class="info-value">500g</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Origin</span>
-              <span class="info-value">Local</span>
+        <!-- Products Grid -->
+        <div class="row gy-4 products-container" id="products-grid">
+          <!-- Products will be dynamically loaded here -->
+        </div>
+
+        <!-- No Products Message (Hidden by default) -->
+        <div class="row d-none" id="no-products">
+          <div class="col-12">
+            <div class="no-products" data-aos="fade-up">
+              <i class="bi bi-search display-1 d-block mb-3"></i>
+              <h3>No products found</h3>
+              <p>Try adjusting your search or filter criteria</p>
             </div>
           </div>
-          <button class="add-to-cart-btn" 
-                  data-product-id="organic-carrots" 
-                  data-product-name="Organic Carrots" 
-                  data-price="8.50">
-            <i class="bi bi-cart-plus"></i> Add to Cart
-          </button>
         </div>
+
       </div>
-    </div>
-  </div><!-- End Product Item -->
+    </section><!-- /Products Section -->
 
-  <div class="col-xl-4 col-md-6 product-item" data-category="equipment" data-aos="fade-up" data-aos-delay="300">
-    <div class="card">
-      <img src="assets/img/products/product-3.jpg" alt="Garden Tools" class="img-fluid">
-      <div class="card-body">
-        <span class="product-category">Equipment | $45.00</span>
-        <h3><a href="product-details.html?product=gardening-tools" class="stretched-link">Gardening Tool Set</a></h3>
-        <div class="card-content">
-          <div class="product-info">
-            <div class="info-item">
-              <span class="info-label">Pieces</span>
-              <span class="info-value">5</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Material</span>
-              <span class="info-value">Steel</span>
-            </div>
-          </div>
-          <button class="add-to-cart-btn" 
-                  data-product-id="gardening-tools" 
-                  data-product-name="Gardening Tool Set" 
-                  data-price="45.00">
-            <i class="bi bi-cart-plus"></i> Add to Cart
-          </button>
-        </div>
-      </div>
-    </div>
-  </div><!-- End Product Item -->
-
-  <div class="col-xl-4 col-md-6 product-item" data-category="meat" data-aos="fade-up" data-aos-delay="400">
-    <div class="card">
-      <img src="assets/img/products/product-4.jpg" alt="Fresh Chicken" class="img-fluid">
-      <div class="card-body">
-        <span class="product-category">Meat | $15.75</span>
-        <h3><a href="product-details.html?product=fresh-chicken" class="stretched-link">Fresh Chicken Breast</a></h3>
-        <div class="card-content">
-          <div class="product-info">
-            <div class="info-item">
-              <span class="info-label">Weight</span>
-              <span class="info-value">1kg</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Type</span>
-              <span class="info-value">Boneless</span>
-            </div>
-          </div>
-          <button class="add-to-cart-btn" 
-                  data-product-id="fresh-chicken" 
-                  data-product-name="Fresh Chicken Breast" 
-                  data-price="15.75">
-            <i class="bi bi-cart-plus"></i> Add to Cart
-          </button>
-        </div>
-      </div>
-    </div>
-  </div><!-- End Product Item -->
-
-  <div class="col-xl-4 col-md-6 product-item" data-category="fruit" data-aos="fade-up" data-aos-delay="500">
-    <div class="card">
-      <img src="assets/img/products/product-5.jpg" alt="Fresh Bananas" class="img-fluid">
-      <div class="card-body">
-        <span class="product-category">Fruit | $6.99</span>
-        <h3><a href="product-details.html?product=organic-bananas" class="stretched-link">Organic Bananas</a></h3>
-        <div class="card-content">
-          <div class="product-info">
-            <div class="info-item">
-              <span class="info-label">Weight</span>
-              <span class="info-value">1kg</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Origin</span>
-              <span class="info-value">Tropical</span>
-            </div>
-          </div>
-          <button class="add-to-cart-btn" 
-                  data-product-id="organic-bananas" 
-                  data-product-name="Organic Bananas" 
-                  data-price="6.99">
-            <i class="bi bi-cart-plus"></i> Add to Cart
-          </button>
-        </div>
-      </div>
-    </div>
-  </div><!-- End Product Item -->
-
-  <div class="col-xl-4 col-md-6 product-item" data-category="vegetable" data-aos="fade-up" data-aos-delay="600">
-    <div class="card">
-      <img src="assets/img/products/product-6.jpg" alt="Fresh Tomatoes" class="img-fluid">
-      <div class="card-body">
-        <span class="product-category">Vegetable | $7.25</span>
-        <h3><a href="product-details.html?product=fresh-tomatoes" class="stretched-link">Fresh Tomatoes</a></h3>
-        <div class="card-content">
-          <div class="product-info">
-            <div class="info-item">
-              <span class="info-label">Weight</span>
-              <span class="info-value">1kg</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Type</span>
-              <span class="info-value">Cherry</span>
-            </div>
-          </div>
-          <button class="add-to-cart-btn" 
-                  data-product-id="fresh-tomatoes" 
-                  data-product-name="Fresh Tomatoes" 
-                  data-price="7.25">
-            <i class="bi bi-cart-plus"></i> Add to Cart
-          </button>
-        </div>
-      </div>
-    </div>
-  </div><!-- End Product Item -->
-</div>
-    
-        </section><!-- /Products Section -->
-  </main>
-
-  <!DOCTYPE html>
-<html lang="en">
-<head>
-  <!-- Your head content remains the same -->
-</head>
-<body class="index-page">
-  
-  <!-- Header will be loaded here -->
-  <div id="header-container"></div>
-
-  <main>
-    <!-- Your page content here -->
   </main>
 
   <!-- Footer will be loaded here -->
@@ -289,33 +113,17 @@
   <!-- Component Loader Script -->
   <script src="assets/js/components.js"></script>
   
-  <!-- Your existing scripts -->
-  <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="assets/vendor/aos/aos.js"></script>
-  <script src="assets/vendor/swiper/swiper-bundle.min.js"></script>
-  <script src="assets/js/main.js"></script>
-
-</body>
-</html>
-
-  <!-- Scroll Top -->
-  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
-
-  <!-- Preloader -->
-  <div id="preloader"></div>
-
   <!-- Vendor JS Files -->
   <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="assets/vendor/php-email-form/validate.js"></script>
   <script src="assets/vendor/aos/aos.js"></script>
   <script src="assets/vendor/swiper/swiper-bundle.min.js"></script>
   <script src="assets/vendor/purecounter/purecounter_vanilla.js"></script>
 
   <!-- Main JS File -->
   <script src="assets/js/main.js"></script>
-  <script src="assets/js/auth.js"></script>
-
+  
+  <!-- Product Display JS -->
+  <script src="assets/js/product.js"></script>
 
 </body>
-
 </html>

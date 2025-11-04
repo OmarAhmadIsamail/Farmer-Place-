@@ -1,3 +1,4 @@
+
 // Product Details Functionality
 document.addEventListener('DOMContentLoaded', function() {
     // Product data
