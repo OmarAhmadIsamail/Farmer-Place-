@@ -1,271 +1,419 @@
-
-// Product Details Functionality
-document.addEventListener('DOMContentLoaded', function() {
-    // Product data
-    const products = {
-        'fresh-apples': {
-            id: 'PROD001',
-            name: 'Fresh Organic Apples',
-            category: 'fruit',
-            price: 12.00,
-            shortDesc: 'Crisp and juicy organic apples from our local orchards',
-            fullDesc: 'Our fresh organic apples are hand-picked from local orchards, ensuring the highest quality and freshness. Grown without synthetic pesticides or fertilizers, these apples are perfect for snacking, baking, or making fresh juice.',
-            features: [
-                '100% Organic Certified',
-                'Locally Grown',
-                'No Artificial Preservatives',
-                'Rich in Fiber and Vitamins'
-            ],
-            weight: '1kg',
-            origin: 'Local Orchards',
-            shelfLife: '2-3 weeks',
-            organic: 'Yes',
-            availability: 'In Stock',
-            images: [
-                'assets/img/products/product-1.jpg',
-                'assets/img/products/product-1-2.jpg',
-                'assets/img/products/product-1-3.jpg'
-            ],
-            details: '<p>Our organic apples are grown using sustainable farming practices that protect the environment and promote biodiversity. Each apple is carefully selected for optimal ripeness and flavor.</p><p>Available in mixed varieties including Fuji, Gala, and Honeycrisp for a diverse taste experience.</p>',
-            nutrition: '<p><strong>Nutrition Facts per 100g:</strong></p><ul><li>Calories: 52</li><li>Carbohydrates: 14g</li><li>Fiber: 2.4g</li><li>Vitamin C: 7% DV</li><li>Potassium: 107mg</li></ul>',
-            storage: '<p>Store in a cool, dry place away from direct sunlight. For longer freshness, refrigerate in the crisper drawer. Keep separate from other fruits that produce ethylene gas.</p>'
-        },
-        'organic-carrots': {
-            id: 'PROD002',
-            name: 'Organic Carrots',
-            category: 'vegetable',
-            price: 8.50,
-            shortDesc: 'Sweet and crunchy organic carrots, perfect for cooking or snacking',
-            fullDesc: 'Our organic carrots are grown in nutrient-rich soil without chemical pesticides. They are known for their sweet flavor and crisp texture, making them perfect for both raw consumption and cooking.',
-            features: [
-                'Certified Organic',
-                'Sweet and Crisp',
-                'Rich in Beta-Carotene',
-                'Versatile for Cooking'
-            ],
-            weight: '500g',
-            origin: 'Local Farms',
-            shelfLife: '3-4 weeks',
-            organic: 'Yes',
-            availability: 'In Stock',
-            images: [
-                'assets/img/products/product-2.jpg',
-                'assets/img/products/product-2-2.jpg',
-                'assets/img/products/product-2-3.jpg'
-            ],
-            details: '<p>These carrots are harvested at peak maturity to ensure maximum sweetness and nutritional value. Grown in rotated fields to maintain soil health.</p>',
-            nutrition: '<p><strong>Nutrition Facts per 100g:</strong></p><ul><li>Calories: 41</li><li>Vitamin A: 334% DV</li><li>Vitamin K: 13% DV</li><li>Fiber: 2.8g</li><li>Potassium: 320mg</li></ul>',
-            storage: '<p>Remove green tops before storage. Store in plastic bag in refrigerator crisper. Can be stored for several weeks when kept cold and humid.</p>'
-        }
-        // Add more products as needed
-    };
-
-    // Get product ID from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const productId = urlParams.get('product') || 'fresh-apples';
-    const product = products[productId];
-
-    // Initialize product details
-    function initializeProductDetails() {
-        if (!product) {
-            console.error('Product not found');
-            return;
-        }
-
-        // Update page content
-        document.getElementById('product-title').textContent = product.name;
-        document.getElementById('product-short-desc').textContent = product.shortDesc;
-        document.getElementById('breadcrumb-product').textContent = product.name;
-        document.getElementById('product-name').textContent = product.name;
-        document.getElementById('product-category').textContent = product.category.charAt(0).toUpperCase() + product.category.slice(1);
-        document.getElementById('product-price').textContent = `$${product.price.toFixed(2)}`;
-        document.getElementById('product-description-full').textContent = product.fullDesc;
-
-        // Update product info sidebar
-        document.getElementById('product-id').textContent = product.id;
-        document.getElementById('product-category-summary').textContent = product.category.charAt(0).toUpperCase() + product.category.slice(1);
-        document.getElementById('product-weight').textContent = product.weight;
-        document.getElementById('product-origin').textContent = product.origin;
-        document.getElementById('product-shelf-life').textContent = product.shelfLife;
-        document.getElementById('product-organic').textContent = product.organic;
-
-        // Update features list
-        const featuresList = document.getElementById('product-features-list');
-        featuresList.innerHTML = '';
-        product.features.forEach(feature => {
-            const li = document.createElement('li');
-            li.textContent = feature;
-            featuresList.appendChild(li);
-        });
-
-        // Update tab content
-        document.getElementById('product-details-content').innerHTML = product.details;
-        document.getElementById('nutrition-info-content').innerHTML = product.nutrition;
-        document.getElementById('storage-tips-content').innerHTML = product.storage;
-
-        // Initialize image slider
-        initializeImageSlider(product.images);
+// Product Details Management - FIXED VERSION
+class ProductDetails {
+    constructor() {
+        this.products = JSON.parse(localStorage.getItem('farmProducts')) || [];
+        this.currentProduct = null;
+        this.init();
     }
 
-    // Initialize image slider
-    function initializeImageSlider(images) {
-        const sliderWrapper = document.querySelector('.product-details-slider .swiper-wrapper');
-        sliderWrapper.innerHTML = '';
-
-        images.forEach((image, index) => {
-            const slide = document.createElement('div');
-            slide.className = 'swiper-slide';
-            slide.innerHTML = `<img src="${image}" alt="${product.name} - Image ${index + 1}">`;
-            sliderWrapper.appendChild(slide);
+    init() {
+        console.log('ProductDetails initializing...');
+        this.waitForCartManager().then(() => {
+            this.loadProductDetails();
+            this.setupEventListeners();
+            this.initializeSwiper();
+        }).catch(error => {
+            console.error('Failed to initialize cart manager:', error);
+            this.loadProductDetails();
+            this.setupEventListeners();
+            this.initializeSwiper();
         });
+    }
 
-        // Reinitialize Swiper
-        if (typeof Swiper !== 'undefined') {
-            new Swiper('.product-details-slider', {
-                loop: true,
-                speed: 600,
-                autoplay: {
-                    delay: 5000,
-                },
-                slidesPerView: 'auto',
-                navigation: {
-                    nextEl: '.swiper-button-next',
-                    prevEl: '.swiper-button-prev',
-                },
-                pagination: {
-                    el: '.swiper-pagination',
-                    type: 'bullets',
-                    clickable: true,
-                },
+    waitForCartManager() {
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
+            const maxAttempts = 50; // 5 seconds max wait
+            
+            const checkCartManager = () => {
+                attempts++;
+                if (window.cartManager) {
+                    console.log('Cart manager found after', attempts, 'attempts');
+                    resolve();
+                } else if (attempts >= maxAttempts) {
+                    reject(new Error('Cart manager not available after waiting'));
+                } else {
+                    setTimeout(checkCartManager, 100);
+                }
+            };
+            
+            checkCartManager();
+        });
+    }
+
+    loadProductDetails() {
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+
+            if (!productId) {
+                this.showError('Product ID not specified in URL');
+                return;
+            }
+
+            console.log('Loading product details for ID:', productId);
+            console.log('Available products:', this.products.map(p => ({ id: p.id, name: p.name })));
+
+            this.currentProduct = this.products.find(product => product.id === productId);
+
+            if (!this.currentProduct) {
+                this.showError('Product not found');
+                return;
+            }
+
+            console.log('Current product found:', this.currentProduct);
+            this.displayProductDetails();
+        } catch (error) {
+            console.error('Error loading product details:', error);
+            this.showError('Failed to load product details');
+        }
+    }
+
+    displayProductDetails() {
+        try {
+            // Update basic info
+            document.getElementById('product-title').textContent = this.currentProduct.name;
+            document.getElementById('product-short-desc').textContent = this.currentProduct.description ? this.currentProduct.description.substring(0, 100) + '...' : 'No description available';
+            document.getElementById('breadcrumb-product').textContent = this.currentProduct.name;
+            document.getElementById('product-name').textContent = this.currentProduct.name;
+            document.getElementById('product-price').textContent = `$${this.currentProduct.price?.toFixed(2) || '0.00'}`;
+            document.getElementById('product-description-full').textContent = this.currentProduct.description || 'No description available';
+
+            // Update category
+            const categoryElements = document.querySelectorAll('#product-category, #product-category-summary');
+            categoryElements.forEach(el => {
+                el.textContent = this.formatCategory(this.currentProduct.category);
+            });
+
+            // Update product info
+            document.getElementById('product-id').textContent = this.currentProduct.id;
+            document.getElementById('product-weight').textContent = this.currentProduct.details?.weight || this.currentProduct.weight || 'N/A';
+            document.getElementById('product-origin').textContent = this.currentProduct.details?.origin || this.currentProduct.origin || 'Local';
+            document.getElementById('product-shelf-life').textContent = this.currentProduct.shelfLife || 'N/A';
+            document.getElementById('product-organic').textContent = this.currentProduct.organic ? 'Yes' : 'No';
+            document.getElementById('product-availability').textContent = this.currentProduct.status === 'active' ? 'In Stock' : 'Out of Stock';
+            document.getElementById('product-availability').className = this.currentProduct.status === 'active' ? 'text-success' : 'text-danger';
+
+            // Update features
+            const featuresList = document.getElementById('product-features-list');
+            if (featuresList && this.currentProduct.features) {
+                featuresList.innerHTML = '';
+                this.currentProduct.features.forEach(feature => {
+                    const li = document.createElement('li');
+                    li.textContent = feature;
+                    featuresList.appendChild(li);
+                });
+            }
+
+            // Update tabs content
+            const detailsContent = document.getElementById('product-details-content');
+            const nutritionContent = document.getElementById('nutrition-info-content');
+            const storageContent = document.getElementById('storage-tips-content');
+            
+            if (detailsContent) detailsContent.innerHTML = this.generateProductDetails();
+            if (nutritionContent) nutritionContent.innerHTML = this.currentProduct.nutrition || '<p>Nutrition information not available.</p>';
+            if (storageContent) storageContent.innerHTML = this.currentProduct.storage || '<p>Storage information not available.</p>';
+
+            // Update images
+            this.loadProductImages();
+            
+            // Update page title
+            document.title = `${this.currentProduct.name} - FarmFresh`;
+        } catch (error) {
+            console.error('Error displaying product details:', error);
+            this.showError('Failed to display product details');
+        }
+    }
+
+    loadProductImages() {
+        try {
+            const swiperWrapper = document.querySelector('.swiper-wrapper');
+            if (swiperWrapper) {
+                // Use main image or fallback to first image in images array
+                const mainImage = this.currentProduct.image || 
+                                (this.currentProduct.images && this.currentProduct.images[0]) || 
+                                'assets/img/placeholder.jpg';
+                
+                swiperWrapper.innerHTML = `
+                    <div class="swiper-slide">
+                        <div class="product-detail-image-container">
+                            <img src="${mainImage}" class="product-detail-image" alt="${this.currentProduct.name}" onerror="this.src='assets/img/placeholder.jpg'">
+                        </div>
+                    </div>
+                `;
+                
+                // Reinitialize swiper
+                this.initializeSwiper();
+            }
+        } catch (error) {
+            console.error('Error loading product images:', error);
+        }
+    }
+
+    initializeSwiper() {
+        try {
+            if (typeof Swiper !== 'undefined') {
+                new Swiper('.product-details-slider', {
+                    loop: true,
+                    speed: 600,
+                    autoplay: {
+                        delay: 5000
+                    },
+                    slidesPerView: 'auto',
+                    navigation: {
+                        nextEl: '.swiper-button-next',
+                        prevEl: '.swiper-button-prev'
+                    },
+                    pagination: {
+                        el: '.swiper-pagination',
+                        type: 'bullets',
+                        clickable: true
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error initializing swiper:', error);
+        }
+    }
+
+    generateProductDetails() {
+        return `
+            <div class="product-specs">
+                <h4>Product Specifications</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li><strong>Category:</strong> ${this.formatCategory(this.currentProduct.category)}</li>
+                            <li><strong>Weight:</strong> ${this.currentProduct.details?.weight || this.currentProduct.weight || 'N/A'}</li>
+                            <li><strong>Origin:</strong> ${this.currentProduct.details?.origin || this.currentProduct.origin || 'Local'}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li><strong>Organic:</strong> ${this.currentProduct.organic ? 'Yes' : 'No'}</li>
+                            <li><strong>Shelf Life:</strong> ${this.currentProduct.shelfLife || 'N/A'}</li>
+                            <li><strong>Status:</strong> ${this.currentProduct.status || 'active'}</li>
+                        </ul>
+                    </div>
+                </div>
+                <p class="mt-3">${this.currentProduct.description || 'No description available'}</p>
+            </div>
+        `;
+    }
+
+    setupEventListeners() {
+        // Quantity controls
+        const minusBtn = document.querySelector('.quantity-minus');
+        const plusBtn = document.querySelector('.quantity-plus');
+        const quantityInput = document.querySelector('.quantity-input');
+
+        if (minusBtn && plusBtn && quantityInput) {
+            minusBtn.addEventListener('click', () => {
+                let value = parseInt(quantityInput.value);
+                if (value > 1) {
+                    quantityInput.value = value - 1;
+                }
+            });
+
+            plusBtn.addEventListener('click', () => {
+                let value = parseInt(quantityInput.value);
+                if (value < 100) {
+                    quantityInput.value = value + 1;
+                }
+            });
+
+            // Input validation
+            quantityInput.addEventListener('change', () => {
+                let value = parseInt(quantityInput.value);
+                if (isNaN(value) || value < 1) {
+                    quantityInput.value = 1;
+                } else if (value > 100) {
+                    quantityInput.value = 100;
+                }
+            });
+        }
+
+        // Add to cart button
+        const addToCartBtn = document.getElementById('add-to-cart-btn');
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener('click', () => {
+                this.addToCart();
             });
         }
     }
 
-    // Quantity selector functionality
-    function initializeQuantitySelector() {
-        const quantityInput = document.getElementById('quantity');
-        const minusBtn = document.querySelector('.quantity-minus');
-        const plusBtn = document.querySelector('.quantity-plus');
-
-        minusBtn.addEventListener('click', () => {
-            let value = parseInt(quantityInput.value);
-            if (value > 1) {
-                quantityInput.value = value - 1;
+    addToCart() {
+        try {
+            const quantityInput = document.querySelector('.quantity-input');
+            const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
+            
+            if (!this.currentProduct) {
+                this.showCartNotification('Product not loaded', true);
+                return;
             }
-        });
 
-        plusBtn.addEventListener('click', () => {
-            let value = parseInt(quantityInput.value);
-            if (value < 100) {
-                quantityInput.value = value + 1;
+            console.log('Attempting to add to cart:', {
+                productId: this.currentProduct.id,
+                productName: this.currentProduct.name,
+                quantity: quantity,
+                price: this.currentProduct.price
+            });
+
+            // Use the centralized CartManager
+            if (window.cartManager && window.cartManager.addItem) {
+                const success = window.cartManager.addItem(this.currentProduct.id, quantity);
+                if (success) {
+                    this.showCartNotification(`${this.currentProduct.name} (${quantity}) added to cart`);
+                } else {
+                    this.showCartNotification('Failed to add item to cart', true);
+                }
+            } else {
+                console.error('Cart manager not available or missing addItem method');
+                this.showCartNotification('Cart system not available', true);
+                // Fallback: use local storage directly with proper data structure
+                this.fallbackAddToCart(quantity);
             }
-        });
-
-        quantityInput.addEventListener('change', () => {
-            let value = parseInt(quantityInput.value);
-            if (isNaN(value) || value < 1) {
-                quantityInput.value = 1;
-            } else if (value > 100) {
-                quantityInput.value = 100;
-            }
-        });
-    }
-
-    // Add to cart functionality
-    function initializeAddToCart() {
-        const addToCartBtn = document.getElementById('add-to-cart-btn');
-        
-        addToCartBtn.addEventListener('click', function() {
-            const quantity = parseInt(document.getElementById('quantity').value);
-            addToCart(product, quantity);
-        });
-    }
-
-    // Add product to cart - FIXED VERSION
-    function addToCart(productData, quantity) {
-        console.log('Adding to cart:', productData.name, quantity);
-        
-        // Initialize cart if it doesn't exist
-        let cart = JSON.parse(localStorage.getItem('cart'));
-        if (!cart) {
-            cart = [];
-            localStorage.setItem('cart', JSON.stringify(cart));
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+            this.showCartNotification('Failed to add item to cart', true);
         }
-        
-        // Check if product already in cart
-        const existingItemIndex = cart.findIndex(item => item.id === productData.id);
-        
-        if (existingItemIndex > -1) {
-            // Update quantity if product exists
-            cart[existingItemIndex].quantity += quantity;
-            console.log('Updated existing item:', cart[existingItemIndex]);
-        } else {
-            // Add new product to cart
-            const newItem = {
-                id: productData.id,
-                name: productData.name,
-                price: productData.price,
-                category: productData.category,
-                image: productData.images[0],
-                weight: productData.weight,
+    }
+
+    // Fallback method if cart manager fails - FIXED DATA STRUCTURE
+    fallbackAddToCart(quantity) {
+        try {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const existingItemIndex = cart.findIndex(item => item.id === this.currentProduct.id);
+            
+            // Ensure all required properties exist with fallbacks
+            const cartItem = {
+                id: this.currentProduct.id,
+                name: this.currentProduct.name || 'Unknown Product',
+                price: this.currentProduct.price || 0,
+                image: this.currentProduct.image || 
+                      (this.currentProduct.images && this.currentProduct.images[0]) || 
+                      'assets/img/placeholder.jpg',
+                category: this.currentProduct.category || 'uncategorized',
+                weight: this.currentProduct.details?.weight || this.currentProduct.weight || 'N/A',
                 quantity: quantity
             };
-            cart.push(newItem);
-            console.log('Added new item:', newItem);
-        }
-        
-        // Save to localStorage
-        localStorage.setItem('cart', JSON.stringify(cart));
-        console.log('Cart saved:', cart);
-        
-        // Update UI
-        updateCartCounter();
-        showCartNotification(productData.name, quantity);
-        
-        // Verify cart was saved
-        const verifyCart = JSON.parse(localStorage.getItem('cart'));
-        console.log('Cart verification:', verifyCart);
-    }
-
-    // Update cart counter in header - FIXED VERSION
-    function updateCartCounter() {
-        const cart = JSON.parse(localStorage.getItem('cart')) || [];
-        const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
-        
-        console.log('Updating cart counter. Total items:', totalItems);
-        
-        // Update counter in current page
-        const cartCounter = document.querySelector('.cart-counter');
-        if (cartCounter) {
-            cartCounter.textContent = totalItems;
-            cartCounter.style.display = totalItems > 0 ? 'flex' : 'none';
-            console.log('Cart counter updated in DOM');
-        }
-        
-        // Also update in header if it exists separately
-        const headerCartCounter = document.querySelector('header .cart-counter');
-        if (headerCartCounter) {
-            headerCartCounter.textContent = totalItems;
-            headerCartCounter.style.display = totalItems > 0 ? 'flex' : 'none';
+            
+            if (existingItemIndex !== -1) {
+                cart[existingItemIndex].quantity += quantity;
+            } else {
+                cart.push(cartItem);
+            }
+            
+            localStorage.setItem('cart', JSON.stringify(cart));
+            this.showCartNotification(`${this.currentProduct.name} (${quantity}) added to cart`);
+            
+            // Update cart count
+            this.updateCartCount();
+            
+            // Dispatch event to notify other components
+            window.dispatchEvent(new CustomEvent('cartUpdated', {
+                detail: { cart: cart }
+            }));
+        } catch (error) {
+            console.error('Fallback add to cart failed:', error);
+            this.showCartNotification('Failed to add item to cart', true);
         }
     }
 
-    // Show cart notification
-    function showCartNotification(productName, quantity) {
-        const notification = document.getElementById('cart-notification');
-        const notificationText = notification.querySelector('.notification-text');
-        
-        notificationText.textContent = `${quantity} ${productName} added to cart!`;
-        notification.classList.add('show');
-        
-        setTimeout(() => {
-            notification.classList.remove('show');
-        }, 3000);
+    updateCartCount() {
+        try {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const cartCount = cart.reduce((total, item) => total + (item.quantity || 1), 0);
+            
+            // Update cart count in header if exists
+            const cartCountElements = document.querySelectorAll('.cart-count, .cart-counter');
+            cartCountElements.forEach(element => {
+                element.textContent = cartCount;
+                element.style.display = cartCount > 0 ? 'flex' : 'none';
+            });
+        } catch (error) {
+            console.error('Error updating cart count:', error);
+        }
     }
 
-    // Initialize everything
-    initializeProductDetails();
-    initializeQuantitySelector();
-    initializeAddToCart();
-    updateCartCounter(); // Initialize cart counter on page load
+    showCartNotification(message, isError = false) {
+        try {
+            // Try to use cart manager's notification system first
+            if (window.cartManager && window.cartManager.showNotification) {
+                window.cartManager.showNotification(message, isError ? 'error' : 'success');
+                return;
+            }
+
+            // Fallback notification system
+            let notification = document.getElementById('cart-notification');
+            if (!notification) {
+                // Create notification element if it doesn't exist
+                notification = document.createElement('div');
+                notification.id = 'cart-notification';
+                notification.className = 'cart-notification';
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px 20px;
+                    border-radius: 8px;
+                    color: white;
+                    z-index: 9999;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    transform: translateX(400px);
+                    opacity: 0;
+                    transition: all 0.3s ease;
+                `;
+                document.body.appendChild(notification);
+            }
+
+            notification.innerHTML = `
+                <i class="bi ${isError ? 'bi-exclamation-circle-fill' : 'bi-check-circle-fill'}"></i>
+                <span class="notification-text">${message}</span>
+            `;
+            
+            notification.style.backgroundColor = isError ? '#dc3545' : '#28a745';
+            notification.style.transform = 'translateX(0)';
+            notification.style.opacity = '1';
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(400px)';
+                notification.style.opacity = '0';
+            }, 3000);
+        } catch (error) {
+            console.error('Error showing cart notification:', error);
+            // Final fallback to alert
+            alert(message);
+        }
+    }
+
+    showError(message) {
+        try {
+            const container = document.querySelector('.product-details .container');
+            if (container) {
+                container.innerHTML = `
+                    <div class="alert alert-danger text-center">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        ${message}
+                        <br>
+                        <a href="product.html" class="btn btn-primary mt-3">Back to Products</a>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Error showing error message:', error);
+        }
+    }
+
+    formatCategory(category) {
+        return category ? category.charAt(0).toUpperCase() + category.slice(1) : 'Uncategorized';
+    }
+}
+
+// Initialize product details when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing ProductDetails...');
+    window.productDetails = new ProductDetails();
 });

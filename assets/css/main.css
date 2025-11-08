@@ -1509,33 +1509,32 @@ section,
   }
 }
 /*--------------------------------------------------------------
-# Product  Section 
+# Product Details Section
 --------------------------------------------------------------*/
 .product-details .product-details-slider {
-  max-height: 500px; /* Reduced height */
+  max-height: 500px;
   border-radius: 10px;
   overflow: hidden;
 }
 
 .product-details .product-details-slider img {
   width: 100%;
-  height: 400px; /* Fixed height */
-  object-fit: cover; /* Ensure images cover the area properly */
+  height: 400px;
+  object-fit: cover;
   border-radius: 10px;
 }
 
 .product-details .swiper-wrapper {
-  height: 400px !important; /* Fixed height for wrapper */
+  height: 400px !important;
 }
 
 .product-details .swiper-slide {
-  height: 400px !important; /* Fixed height for slides */
+  height: 400px !important;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* Keep the rest of your existing product-details styles */
 .product-details .product-meta .badge {
   font-size: 14px;
   padding: 6px 12px;
@@ -1615,6 +1614,7 @@ section,
   border-radius: 8px;
   border-left: 4px solid var(--accent-color);
 }
+
 /* Product Features */
 .product-features ul {
   list-style: none;
@@ -1633,6 +1633,54 @@ section,
   left: 0;
   color: var(--accent-color);
   font-weight: bold;
+}
+
+/* Cart Notification */
+.cart-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: var(--accent-color);
+  color: var(--contrast-color);
+  padding: 15px 20px;
+  border-radius: 5px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  animation: slideIn 0.3s ease;
+}
+
+.cart-notification.show {
+  display: flex;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .product-details .product-info {
+    position: static;
+    margin-top: 30px;
+  }
+  
+  .product-details .add-to-cart-section .row {
+    gap: 15px;
+  }
+  
+  .product-details .add-to-cart-section .col-md-6 {
+    width: 100%;
+  }
 }
 /*--------------------------------------------------------------
 # Cart Section

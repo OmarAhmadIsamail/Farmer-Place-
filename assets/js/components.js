@@ -156,6 +156,28 @@ class ComponentLoader {
     }
 }
 
+// Add admin component loading
+function loadAdminComponents() {
+    const includes = document.querySelectorAll('[data-include]');
+    
+    includes.forEach(include => {
+        const file = include.getAttribute('data-include');
+        fetch(file)
+            .then(response => response.text())
+            .then(data => {
+                include.innerHTML = data;
+            })
+            .catch(error => {
+                console.error('Error loading component:', error);
+            });
+    });
+}
+
+// Load components when DOM is ready
+if (document.querySelector('.admin-wrapper')) {
+    document.addEventListener('DOMContentLoaded', loadAdminComponents);
+}
+
 // Create global instance
 window.componentLoader = new ComponentLoader();
 
