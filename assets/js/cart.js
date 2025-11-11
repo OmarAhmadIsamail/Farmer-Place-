@@ -184,7 +184,6 @@ class CartPage {
         console.log('Cart items loaded successfully');
     }
 
-    // ... rest of your existing methods remain the same ...
     setupEventListeners() {
         console.log('Setting up event listeners...');
         
@@ -538,12 +537,56 @@ class CartPage {
         return category ? category.charAt(0).toUpperCase() + category.slice(1) : 'Uncategorized';
     }
 
+    // Authentication and Checkout Methods
+    checkAuthAndProceed() {
+        const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+        
+        if (!isLoggedIn) {
+            // Show login prompt or redirect to login
+            this.showLoginPrompt();
+            return false;
+        }
+        
+        return true;
+    }
+
+    showLoginPrompt() {
+        const loginPrompt = document.createElement('div');
+        loginPrompt.className = 'login-prompt-modal';
+        loginPrompt.innerHTML = `
+            <div class="login-prompt-content">
+                <h4>Login Required</h4>
+                <p>Please log in to proceed with checkout.</p>
+                <div class="login-prompt-buttons">
+                    <button class="btn btn-primary" id="go-to-login">Go to Login</button>
+                    <button class="btn btn-outline-secondary" id="continue-guest">Continue as Guest</button>
+                    <button class="btn btn-outline-secondary" id="cancel-checkout">Cancel</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(loginPrompt);
+        
+        // Add event listeners
+        document.getElementById('go-to-login').addEventListener('click', () => {
+            window.location.href = 'auth/login.html?redirect=checkout';
+        });
+        
+        document.getElementById('continue-guest').addEventListener('click', () => {
+            loginPrompt.remove();
+            this.proceedToCheckout();
+        });
+        
+        document.getElementById('cancel-checkout').addEventListener('click', () => {
+            loginPrompt.remove();
+        });
+    }
+
     proceedToCheckout() {
         let cart = [];
         if (window.cartManager && window.cartManager.getCart) {
             cart = window.cartManager.getCart();
         } else {
-            // Fallback
             try {
                 cart = JSON.parse(localStorage.getItem('cart')) || [];
             } catch (error) {
@@ -557,12 +600,23 @@ class CartPage {
             return;
         }
         
+        // Check authentication
+        const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+        
+        if (!isLoggedIn) {
+            // For guest checkout, we'll allow but show a message
+            const proceed = confirm('You are checking out as a guest. Would you like to create an account for faster checkout and order tracking?');
+            if (proceed) {
+                window.location.href = 'auth/signup.html?redirect=checkout';
+                return;
+            }
+        }
+        
         // Save delivery option
         const deliveryOption = document.querySelector('input[name="deliveryOption"]:checked');
         if (deliveryOption) {
             localStorage.setItem('deliveryOption', deliveryOption.value);
         } else {
-            // Default to standard delivery if no option selected
             localStorage.setItem('deliveryOption', 'standard');
         }
         

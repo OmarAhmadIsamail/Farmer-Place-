@@ -1,6 +1,3 @@
-The .scss (Sass) files are only available in the pro version.
-You can buy it from: https://bootstrapmade.com/real-estate-agency-bootstrap-template/
-
 -------------------------------------------------------------------------------------
 EstateAgency/
 ├── index.html
@@ -20,6 +17,7 @@ EstateAgency/
 ├── components/
 │   ├── header.html
 │   └── footer.html
+├
 ├── assets/
 │   ├── css/
 │   │   ├── main.css

@@ -206,8 +206,21 @@ class CartManager {
         return this.cart.some(item => item.id === productId);
     }
 
+    // NEW METHOD: Get current user from session storage
+    getCurrentUser() {
+        try {
+            const userData = sessionStorage.getItem('userData');
+            return userData ? JSON.parse(userData) : null;
+        } catch (error) {
+            console.error('Error getting current user:', error);
+            return null;
+        }
+    }
+
+    // UPDATED METHOD: Create order with user info
     createOrder(customerInfo, totalAmount = null) {
         const orders = this.getOrders();
+        const currentUser = this.getCurrentUser();
         
         const newOrder = {
             id: Date.now(),
@@ -220,7 +233,9 @@ class CartManager {
             status: 'pending',
             date: new Date().toISOString(),
             deliveryOption: localStorage.getItem('deliveryOption') || 'standard',
-            promoCode: localStorage.getItem('appliedPromoCode') || null
+            promoCode: localStorage.getItem('appliedPromoCode') || null,
+            userId: currentUser ? currentUser.id : 'guest', // Add user ID
+            userEmail: currentUser ? currentUser.email : customerInfo.email // Add user email
         };
 
         orders.push(newOrder);

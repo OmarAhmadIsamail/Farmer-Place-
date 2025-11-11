@@ -327,5 +327,27 @@
     initProductsFilterAndCart();
     setupBlogNavigation(); // Add blog navigation setup
   }
+// Add this to your main.js file - AFTER all other code
+
+/**
+ * Initialize logout functionality
+ */
+function initLogout() {
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+      logoutBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          console.log('Logout clicked from main.js');
+          sessionStorage.removeItem('isLoggedIn');
+          sessionStorage.removeItem('userData');
+          window.location.href = 'auth/login.html';
+      });
+      console.log('Logout button initialized in main.js');
+  }
+}
+
+// Initialize logout when everything is loaded
+window.addEventListener('load', initLogout);
+document.addEventListener('DOMContentLoaded', initLogout);
 
 })();

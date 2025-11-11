@@ -1,5 +1,8 @@
-// Checkout Functionality - Updated for Guest Checkout
+// Checkout Functionality - Enhanced with Auth Integration
 document.addEventListener('DOMContentLoaded', function() {
+    // Check authentication first - REQUIRE LOGIN
+    checkAuthStatus();
+    
     // Initialize checkout
     initializeCheckout();
     
@@ -9,6 +12,47 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup event listeners
     setupEventListeners();
 });
+
+// Check authentication status - REQUIRE LOGIN
+function checkAuthStatus() {
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+    const userData = isLoggedIn ? JSON.parse(sessionStorage.getItem('userData') || '{}') : null;
+    
+    if (!isLoggedIn) {
+        // Redirect to login page immediately
+        alert('Please log in to proceed with checkout.');
+        window.location.href = 'auth/login.html?redirect=checkout';
+        return;
+    }
+    
+    // Update UI for logged in user
+    updateAuthUI(userData);
+}
+
+// Update UI for logged in user
+function updateAuthUI(userData) {
+    const authSection = document.getElementById('auth-section');
+    const userWelcome = document.getElementById('user-welcome');
+    
+    if (authSection) {
+        authSection.innerHTML = `
+            <div class="alert alert-success mb-4">
+                <i class="bi bi-person-check me-2"></i>
+                Welcome back, ${userData.firstName}! You're logged in and ready to checkout.
+            </div>
+        `;
+    }
+    
+    if (userWelcome) {
+        userWelcome.textContent = `Welcome, ${userData.firstName}`;
+    }
+    
+    // Hide any login prompts
+    const loginPrompt = document.querySelector('.login-prompt');
+    if (loginPrompt) {
+        loginPrompt.style.display = 'none';
+    }
+}
 
 // Initialize checkout
 function initializeCheckout() {
@@ -21,34 +65,26 @@ function initializeCheckout() {
         return;
     }
     
-    // Pre-fill user information if available (from registered user or previous guest checkout)
+    // Pre-fill user information from logged in user
     prefillUserInfo();
 }
 
-// Pre-fill user information
+// Pre-fill user information - Only from logged in user
 function prefillUserInfo() {
-    const loggedInUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
-    const registeredUser = JSON.parse(sessionStorage.getItem('registeredUser'));
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+    const userData = isLoggedIn ? JSON.parse(sessionStorage.getItem('userData')) : null;
     
-    // Try to get guest info from localStorage if available
+    if (userData) {
+        // Pre-fill from logged in user
+        document.getElementById('firstName').value = userData.firstName || '';
+        document.getElementById('lastName').value = userData.lastName || '';
+        document.getElementById('email').value = userData.email || '';
+    }
+    
+    // Try to get additional info from previous orders or guest info
     const guestInfo = JSON.parse(localStorage.getItem('guestInfo')) || {};
     
-    if (registeredUser && registeredUser.fullName) {
-        const names = registeredUser.fullName.split(' ');
-        document.getElementById('firstName').value = names[0] || '';
-        document.getElementById('lastName').value = names.slice(1).join(' ') || '';
-    } else if (guestInfo.firstName) {
-        document.getElementById('firstName').value = guestInfo.firstName;
-        document.getElementById('lastName').value = guestInfo.lastName || '';
-    }
-    
-    if (registeredUser && registeredUser.email) {
-        document.getElementById('email').value = registeredUser.email;
-    } else if (guestInfo.email) {
-        document.getElementById('email').value = guestInfo.email;
-    }
-    
-    // Pre-fill other guest info if available
+    // Pre-fill other info if available (from previous orders)
     if (guestInfo.phone) {
         document.getElementById('phone').value = guestInfo.phone;
     }
@@ -151,11 +187,7 @@ function setupEventListeners() {
     document.getElementById('cardNumber')?.addEventListener('input', formatCardNumber);
     document.getElementById('expiryDate')?.addEventListener('input', formatExpiryDate);
     
-    // Guest checkout option
-    const guestCheckoutBtn = document.getElementById('guest-checkout-btn');
-    if (guestCheckoutBtn) {
-        guestCheckoutBtn.addEventListener('click', proceedAsGuest);
-    }
+    // Remove guest checkout button event listener since we don't want it
 }
 
 // Handle next step
@@ -369,8 +401,8 @@ function saveLocation() {
     
     localStorage.setItem('deliveryLocation', JSON.stringify(locationData));
     
-    // Save guest info for future use
-    localStorage.setItem('guestInfo', JSON.stringify(locationData));
+    // Save info for future use
+    localStorage.setItem('userInfo', JSON.stringify(locationData));
     
     updateDeliveryInfo();
 }
@@ -430,7 +462,7 @@ function updatePaymentInfo() {
             break;
         case 'card':
             const cardData = JSON.parse(localStorage.getItem('cardData') || '{}');
-            paymentDetails = `Credit/Debit Card ending in ${cardData.number.slice(-4)}`;
+            paymentDetails = `Credit/Debit Card ending in ${cardData.number ? cardData.number.slice(-4) : '****'}`;
             break;
     }
     
@@ -486,23 +518,17 @@ function handleOrderSubmit(e) {
     placeOrder();
 }
 
-// Proceed as guest (skip login requirement)
-function proceedAsGuest() {
-    // Skip login and go directly to checkout step 2 (shipping info)
-    document.getElementById('step-1').classList.remove('active');
-    document.getElementById('step-2').classList.add('active');
-    updateStepProgress(2);
-    
-    // Hide the login prompt
-    const loginPrompt = document.querySelector('.login-prompt');
-    if (loginPrompt) {
-        loginPrompt.style.display = 'none';
-    }
-}
-
-// Place order
+// Enhanced placeOrder function - Only for logged in users
 function placeOrder() {
     if (!validateReview()) {
+        return;
+    }
+    
+    // Double-check user is logged in
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+    if (!isLoggedIn) {
+        alert('Please log in to complete your order.');
+        window.location.href = 'auth/login.html?redirect=checkout';
         return;
     }
     
@@ -518,15 +544,16 @@ function placeOrder() {
     const tax = subtotal * 0.08;
     const total = subtotal + deliveryFee + tax;
     
-    // Check if user is logged in
-    const loggedInUser = sessionStorage.getItem('loggedInUser');
-    const userId = loggedInUser ? JSON.parse(loggedInUser).id : 'guest';
+    // Get user info from session storage
+    const userData = JSON.parse(sessionStorage.getItem('userData'));
     
-    // Create order object
+    // Create order object for registered user
     const order = {
         id: 'FA-' + Date.now(),
         date: new Date().toISOString(),
-        userId: userId,
+        userId: userData.id,
+        userEmail: userData.email,
+        userName: `${userData.firstName} ${userData.lastName}`,
         items: cart,
         paymentMethod: paymentMethod,
         delivery: {
@@ -540,10 +567,11 @@ function placeOrder() {
             delivery: deliveryFee,
             total: total
         },
-        status: 'confirmed'
+        status: 'pending',
+        authType: 'registered'
     };
     
-    // Save order to localStorage (in real app, this would go to backend)
+    // Save order to localStorage
     const orders = JSON.parse(localStorage.getItem('orders')) || [];
     orders.push(order);
     localStorage.setItem('orders', JSON.stringify(orders));
@@ -554,11 +582,11 @@ function placeOrder() {
     // Update cart counter
     updateCartCounter();
     
-    // Show success modal
+    // Show success modal for registered user
     showSuccessModal(order);
 }
 
-// Show success modal
+// Success modal for registered users
 function showSuccessModal(order) {
     document.getElementById('order-id').textContent = order.id;
     
@@ -566,12 +594,28 @@ function showSuccessModal(order) {
     deliveryDate.setDate(deliveryDate.getDate() + (order.delivery.option === 'express' ? 1 : 3));
     document.getElementById('estimated-delivery').textContent = deliveryDate.toLocaleDateString();
     
+    // Success message for registered users
+    const successMessage = document.getElementById('success-message');
+    if (successMessage) {
+        successMessage.innerHTML = `
+            <p class="mb-3">Thank you for your order! Your order has been confirmed and will be processed shortly.</p>
+            <div class="alert alert-success">
+                <i class="bi bi-check-circle me-2"></i>
+                You can track your order in your account at any time.
+            </div>
+            <div class="d-grid gap-2">
+                <a href="order-tracking.html" class="btn btn-success">View My Orders</a>
+                <a href="product.html" class="btn btn-outline-primary">Continue Shopping</a>
+            </div>
+        `;
+    }
+    
     const successModal = new bootstrap.Modal(document.getElementById('successModal'));
     successModal.show();
     
-    // Redirect when modal is hidden
+    // Redirect to order tracking when modal is hidden
     document.getElementById('successModal').addEventListener('hidden.bs.modal', function() {
-        window.location.href = 'index.html';
+        window.location.href = 'order-tracking.html';
     });
 }
 

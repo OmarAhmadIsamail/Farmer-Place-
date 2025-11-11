@@ -1,4 +1,4 @@
-// Admin Order Management
+// Admin Order Management - Enhanced Version
 class OrderManager {
     constructor() {
         this.orders = JSON.parse(localStorage.getItem('orders')) || [];
@@ -55,17 +55,21 @@ class OrderManager {
         `;
     }
 
-    // Get order statistics
+    // Get order statistics (FIXED: Only count delivered orders as completed and for revenue)
     getOrderStats() {
         const totalOrders = this.orders.length;
         const pendingOrders = this.orders.filter(order => 
             order.status === 'pending' || order.status === 'confirmed'
         ).length;
+        
+        // Only count delivered orders as completed
         const completedOrders = this.orders.filter(order => 
             order.status === 'delivered'
         ).length;
+        
+        // Only count revenue from delivered orders
         const totalRevenue = this.orders
-            .filter(order => order.status !== 'cancelled')
+            .filter(order => order.status === 'delivered')
             .reduce((total, order) => total + order.totals.total, 0);
 
         return {
@@ -491,6 +495,24 @@ class OrderManager {
     // Get orders by status
     getOrdersByStatus(status) {
         return this.orders.filter(order => order.status === status);
+    }
+
+    // Delete order from admin (soft delete - mark as cancelled)
+    deleteOrder(orderId) {
+        if (confirm('Are you sure you want to cancel this order?')) {
+            const order = this.orders.find(o => o.id === orderId);
+            if (order) {
+                order.status = 'cancelled';
+                this.saveOrders();
+                
+                // Reload the table and stats
+                this.loadOrdersTable();
+                this.loadOrderStats();
+                this.updateDashboardStats();
+                
+                alert('Order has been cancelled');
+            }
+        }
     }
 }
 
