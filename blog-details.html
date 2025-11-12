@@ -75,7 +75,7 @@
                                         <i class="bi bi-folder"></i> Uncategorized
                                     </span>
                                     <span class="comments" id="blog-comments">
-                                        <i class="bi bi-chat"></i> 5 Comments
+                                        <i class="bi bi-chat"></i> <span id="comments-count-header">0</span> Comments
                                     </span>
                                 </div>
                             </div>
@@ -133,15 +133,15 @@
                                     <form id="comment-form">
                                         <div class="row">
                                             <div class="col-md-6">
-                                                <input type="text" class="form-control" placeholder="Your Name" required>
+                                                <input type="text" id="comment-name" class="form-control" placeholder="Your Name" required>
                                             </div>
                                             <div class="col-md-6">
-                                                <input type="email" class="form-control" placeholder="Your Email" required>
+                                                <input type="email" id="comment-email" class="form-control" placeholder="Your Email" required>
                                             </div>
                                             <div class="col-12">
-                                                <textarea class="form-control" placeholder="Your Comment" rows="5" required></textarea>
+                                                <textarea class="form-control" id="comment-text" placeholder="Your Comment" rows="5" required></textarea>
                                             </div>
-                                            <div class="col-12">
+                                            <div class="col-12 mt-3">
                                                 <button type="submit" class="btn btn-primary">Post Comment</button>
                                             </div>
                                         </div>
@@ -208,9 +208,11 @@
     <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="assets/vendor/aos/aos.js"></script>
 
-    <!-- Main JS File -->
+     <!-- Main JS File -->
     <script src="assets/js/main.js"></script>
-    <script src="assets/js/blog-details.js"></script>
     <script src="assets/js/components.js"></script>
+    <script src="assets/js/comments.js"></script>
+    <script src="assets/js/blog-details.js"></script>
+    <script src="assets/js/view-tracker.js"></script>
 </body>
 </html>

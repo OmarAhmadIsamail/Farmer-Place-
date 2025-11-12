@@ -1,4 +1,4 @@
-// Centralized Cart Manager with Order Management - FIXED
+// Centralized Cart Manager with Enhanced Promo Integration - UPDATED
 class CartManager {
     constructor() {
         console.log('CartManager initializing...');
@@ -31,7 +31,7 @@ class CartManager {
     getCart() {
         try {
             const cart = JSON.parse(localStorage.getItem('cart')) || [];
-            // Validate and clean up cart items - FIXED: Don't create unknown products
+            // Validate and clean up cart items
             return cart.filter(item => this.isValidCartItem(item));
         } catch (error) {
             console.error('Error reading cart from localStorage:', error);
@@ -39,7 +39,7 @@ class CartManager {
         }
     }
 
-    // NEW METHOD: Check if cart item is valid (has required properties and exists in products)
+    // Check if cart item is valid (has required properties and exists in products)
     isValidCartItem(item) {
         if (!item || typeof item !== 'object') return false;
         
@@ -59,7 +59,7 @@ class CartManager {
         return true;
     }
 
-    // NEW METHOD: Clean up invalid cart items
+    // Clean up invalid cart items
     cleanInvalidCartItems() {
         const originalLength = this.cart.length;
         this.cart = this.cart.filter(item => this.isValidCartItem(item));
@@ -90,7 +90,7 @@ class CartManager {
         }
     }
 
-    // FIXED METHOD: Only validate existing properties, don't create unknown products
+    // Only validate existing properties, don't create unknown products
     validateCartItem(item) {
         // If item is already invalid, return null to filter it out
         if (!this.isValidCartItem(item)) {
@@ -123,7 +123,6 @@ class CartManager {
         
         if (!product) {
             console.error('Product not found in farmProducts:', productId);
-            console.log('Available products:', products.map(p => p.id));
             this.showNotification('Product not available', 'error');
             return false;
         }
@@ -139,7 +138,7 @@ class CartManager {
         if (existingItem) {
             existingItem.quantity += quantity;
         } else {
-            // Create new cart item with product data - FIXED: Use actual product data
+            // Create new cart item with product data
             const newCartItem = {
                 id: product.id,
                 name: product.name,
@@ -196,17 +195,17 @@ class CartManager {
         return this.cart.reduce((total, item) => total + ((item.price || 0) * (item.quantity || 1)), 0);
     }
 
-    // NEW METHOD: Get cart item by product ID
+    // Get cart item by product ID
     getCartItem(productId) {
         return this.cart.find(item => item.id === productId);
     }
 
-    // NEW METHOD: Check if product is in cart
+    // Check if product is in cart
     isInCart(productId) {
         return this.cart.some(item => item.id === productId);
     }
 
-    // NEW METHOD: Get current user from session storage
+    // Get current user from session storage
     getCurrentUser() {
         try {
             const userData = sessionStorage.getItem('userData');
@@ -217,37 +216,77 @@ class CartManager {
         }
     }
 
-    // UPDATED METHOD: Create order with user info
+    // Create order with user info
     createOrder(customerInfo, totalAmount = null) {
         const orders = this.getOrders();
         const currentUser = this.getCurrentUser();
         
+        // Get applied promo code
+        const appliedPromoCode = localStorage.getItem('appliedPromoCode');
+        const deliveryOption = localStorage.getItem('deliveryOption') || 'standard';
+        
+        // Calculate final amounts
+        const subtotal = this.getSubtotal();
+        const deliveryFee = this.calculateDeliveryFee(subtotal, deliveryOption);
+        const discount = this.calculateDiscount(subtotal, appliedPromoCode);
+        const finalTotal = totalAmount || (subtotal + deliveryFee - discount);
+
         const newOrder = {
-            id: Date.now(),
+            id: 'ORD_' + Date.now(),
             items: [...this.cart],
             customerName: customerInfo.name,
             customerEmail: customerInfo.email,
             customerPhone: customerInfo.phone,
             customerAddress: customerInfo.address,
-            amount: totalAmount || this.getSubtotal(),
+            subtotal: subtotal,
+            deliveryFee: deliveryFee,
+            discount: discount,
+            totalAmount: finalTotal,
             status: 'pending',
             date: new Date().toISOString(),
-            deliveryOption: localStorage.getItem('deliveryOption') || 'standard',
-            promoCode: localStorage.getItem('appliedPromoCode') || null,
-            userId: currentUser ? currentUser.id : 'guest', // Add user ID
-            userEmail: currentUser ? currentUser.email : customerInfo.email // Add user email
+            deliveryOption: deliveryOption,
+            promoCode: appliedPromoCode,
+            userId: currentUser ? currentUser.id : 'guest',
+            userEmail: currentUser ? currentUser.email : customerInfo.email
         };
+
+        // Increment promo code usage if applied
+        if (appliedPromoCode) {
+            this.incrementPromoUsage(appliedPromoCode);
+        }
 
         orders.push(newOrder);
         this.saveOrders(orders);
         this.clearCart();
         
         // Clear checkout-related localStorage items
+        this.clearCheckoutData();
+        
+        return newOrder;
+    }
+
+    // NEW: Increment promo code usage
+    incrementPromoUsage(promoCode) {
+        try {
+            const promoCodes = JSON.parse(localStorage.getItem('promoCodes')) || [];
+            const promo = promoCodes.find(p => p.code === promoCode);
+            
+            if (promo) {
+                promo.usedCount = (promo.usedCount || 0) + 1;
+                promo.updatedAt = new Date().toISOString();
+                localStorage.setItem('promoCodes', JSON.stringify(promoCodes));
+                console.log(`Incremented usage for promo code: ${promoCode}`);
+            }
+        } catch (error) {
+            console.error('Error incrementing promo usage:', error);
+        }
+    }
+
+    // NEW: Clear checkout data
+    clearCheckoutData() {
         localStorage.removeItem('deliveryOption');
         localStorage.removeItem('appliedPromoCode');
         localStorage.removeItem('checkoutTotal');
-        
-        return newOrder;
     }
 
     getOrders() {
@@ -289,10 +328,191 @@ class CartManager {
         return false;
     }
 
-    // NEW METHOD: Get orders by status
+    // Get orders by status
     getOrdersByStatus(status) {
         const orders = this.getOrders();
         return orders.filter(order => order.status === status);
+    }
+
+    // UPDATED: Calculate delivery fee with promo consideration
+    calculateDeliveryFee(subtotal, deliveryOption = null) {
+        const option = deliveryOption || localStorage.getItem('deliveryOption') || 'standard';
+        
+        // Check for free shipping promo
+        const appliedPromoCode = localStorage.getItem('appliedPromoCode');
+        if (appliedPromoCode) {
+            try {
+                const promoCodes = JSON.parse(localStorage.getItem('promoCodes')) || [];
+                const promo = promoCodes.find(p => 
+                    p.code === appliedPromoCode && 
+                    p.type === 'free_shipping'
+                );
+                
+                if (promo) {
+                    // Validate free shipping promo
+                    const validation = this.validatePromoCodeForCart(appliedPromoCode, subtotal);
+                    if (validation.valid) {
+                        return 0; // Free shipping
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking free shipping promo:', error);
+            }
+        }
+        
+        switch (option) {
+            case 'free':
+                return subtotal >= 50 ? 0 : 5.00;
+            case 'standard':
+                return 5.00;
+            case 'express':
+                return 12.00;
+            default:
+                return 5.00;
+        }
+    }
+
+    // UPDATED: Calculate discount with enhanced promo integration
+    calculateDiscount(subtotal, promoCode = null) {
+        const code = promoCode || localStorage.getItem('appliedPromoCode');
+        if (!code) return 0;
+
+        // Use promo validation
+        const validation = this.validatePromoCodeForCart(code, subtotal);
+        if (!validation.valid || !validation.promo) {
+            return 0;
+        }
+
+        const promo = validation.promo;
+        let discount = 0;
+
+        switch (promo.type) {
+            case 'percentage':
+                discount = subtotal * (promo.value / 100);
+                break;
+            case 'fixed':
+                discount = Math.min(promo.value, subtotal);
+                break;
+            case 'free_shipping':
+                discount = 0; // Free shipping handled separately
+                break;
+        }
+
+        return Math.min(discount, subtotal);
+    }
+
+    // NEW: Enhanced promo code validation
+    validatePromoCodeForCart(code, cartSubtotal) {
+        if (!code) {
+            return { valid: false, message: 'Please enter a promo code' };
+        }
+
+        try {
+            const promoCodes = JSON.parse(localStorage.getItem('promoCodes')) || [];
+            const promo = promoCodes.find(p => 
+                p.code === code.toUpperCase() && 
+                p.status === 'active'
+            );
+
+            if (!promo) {
+                return { valid: false, message: 'Invalid promo code' };
+            }
+
+            const now = new Date();
+
+            // Check if not started yet
+            if (promo.startDate && new Date(promo.startDate) > now) {
+                const startDate = new Date(promo.startDate).toLocaleDateString();
+                return { 
+                    valid: false, 
+                    message: `Promo code starts on ${startDate}` 
+                };
+            }
+
+            // Check if expired
+            if (promo.expiryDate && new Date(promo.expiryDate) < now) {
+                return { valid: false, message: 'Promo code has expired' };
+            }
+
+            // Check minimum order
+            if (promo.minOrder && cartSubtotal < promo.minOrder) {
+                return { 
+                    valid: false, 
+                    message: `Minimum order of $${promo.minOrder} required` 
+                };
+            }
+
+            // Check usage limits
+            if (promo.maxUses && (promo.usedCount || 0) >= promo.maxUses) {
+                return { valid: false, message: 'Promo code usage limit reached' };
+            }
+
+            return { valid: true, promo: promo };
+        } catch (error) {
+            console.error('Error validating promo code:', error);
+            return { valid: false, message: 'Error validating promo code' };
+        }
+    }
+
+    // NEW: Apply promo code with enhanced functionality
+    applyPromoCode(code, cartSubtotal) {
+        const validation = this.validatePromoCodeForCart(code, cartSubtotal);
+        
+        if (!validation.valid) {
+            return validation;
+        }
+
+        const promo = validation.promo;
+        let discount = 0;
+        let freeShipping = false;
+
+        switch (promo.type) {
+            case 'percentage':
+                discount = cartSubtotal * (promo.value / 100);
+                break;
+            case 'fixed':
+                discount = Math.min(promo.value, cartSubtotal);
+                break;
+            case 'free_shipping':
+                freeShipping = true;
+                discount = 0;
+                break;
+        }
+
+        // Store applied promo code
+        localStorage.setItem('appliedPromoCode', code.toUpperCase());
+
+        return {
+            valid: true,
+            discount: discount,
+            freeShipping: freeShipping,
+            promo: promo
+        };
+    }
+
+    // NEW: Remove applied promo code
+    removePromoCode() {
+        localStorage.removeItem('appliedPromoCode');
+        return { valid: true, message: 'Promo code removed' };
+    }
+
+    // NEW: Get cart summary for checkout with promo support
+    getCartSummary() {
+        const subtotal = this.getSubtotal();
+        const deliveryOption = localStorage.getItem('deliveryOption') || 'standard';
+        const deliveryFee = this.calculateDeliveryFee(subtotal, deliveryOption);
+        const discount = this.calculateDiscount(subtotal);
+        const total = subtotal + deliveryFee - discount;
+
+        return {
+            subtotal: subtotal,
+            deliveryFee: deliveryFee,
+            discount: discount,
+            total: total,
+            itemCount: this.getTotalItems(),
+            deliveryOption: deliveryOption,
+            appliedPromoCode: localStorage.getItem('appliedPromoCode')
+        };
     }
 
     updateCartCounter() {
@@ -345,13 +565,14 @@ class CartManager {
             detail: { 
                 cart: [...this.cart],
                 totalItems: this.getTotalItems(),
-                subtotal: this.getSubtotal()
+                subtotal: this.getSubtotal(),
+                summary: this.getCartSummary()
             }
         });
         window.dispatchEvent(event);
     }
 
-    // NEW METHOD: Dispatch order update event
+    // Dispatch order update event
     dispatchOrderUpdateEvent(orderId, status) {
         const event = new CustomEvent('orderUpdated', {
             detail: {
@@ -409,60 +630,25 @@ class CartManager {
         }, 3000);
     }
 
-    // NEW METHOD: Calculate delivery fee
-    calculateDeliveryFee(subtotal) {
-        const deliveryOption = localStorage.getItem('deliveryOption') || 'standard';
-        
-        switch (deliveryOption) {
-            case 'free':
-                return subtotal >= 50 ? 0 : 5.00;
-            case 'standard':
-                return 5.00;
-            case 'express':
-                return 12.00;
-            default:
-                return 5.00;
+    // NEW: Get promo statistics
+    getPromoStats() {
+        try {
+            const promoCodes = JSON.parse(localStorage.getItem('promoCodes')) || [];
+            const totalPromos = promoCodes.length;
+            const activePromos = promoCodes.filter(p => p.status === 'active').length;
+            const expiredPromos = promoCodes.filter(p => p.status === 'expired').length;
+            const totalUses = promoCodes.reduce((sum, promo) => sum + (promo.usedCount || 0), 0);
+            
+            return {
+                totalPromos,
+                activePromos,
+                expiredPromos,
+                totalUses
+            };
+        } catch (error) {
+            console.error('Error getting promo stats:', error);
+            return { totalPromos: 0, activePromos: 0, expiredPromos: 0, totalUses: 0 };
         }
-    }
-
-    // NEW METHOD: Calculate discount from promo code
-    calculateDiscount(subtotal) {
-        const promoCode = localStorage.getItem('appliedPromoCode');
-        if (!promoCode) return 0;
-
-        let discount = 0;
-
-        switch (promoCode.toUpperCase()) {
-            case 'WELCOME10':
-                discount = subtotal * 0.1;
-                break;
-            case 'FARMER15':
-                discount = subtotal >= 30 ? subtotal * 0.15 : 0;
-                break;
-            case 'FIRST5':
-                discount = 5.00;
-                break;
-            default:
-                discount = 0;
-        }
-
-        return Math.min(discount, subtotal);
-    }
-
-    // NEW METHOD: Get cart summary for checkout
-    getCartSummary() {
-        const subtotal = this.getSubtotal();
-        const deliveryFee = this.calculateDeliveryFee(subtotal);
-        const discount = this.calculateDiscount(subtotal);
-        const total = subtotal + deliveryFee - discount;
-
-        return {
-            subtotal: subtotal,
-            deliveryFee: deliveryFee,
-            discount: discount,
-            total: total,
-            itemCount: this.getTotalItems()
-        };
     }
 }
 

@@ -294,7 +294,8 @@ class CartPage {
         }
         
         if (success) {
-            this.showNotification('Cart updated');
+            // REMOVED: Automatic notification for quantity changes
+            // Only update the cart display silently
             this.loadCartItems(); // Reload to reflect changes
         }
     }
@@ -331,6 +332,7 @@ class CartPage {
         }
         
         if (removedItem) {
+            // Show notification only for remove actions (user explicitly clicked remove)
             this.showNotification(`${removedItem.name} removed from cart`);
             this.loadCartItems(); // Reload to reflect changes
         }
@@ -356,6 +358,34 @@ class CartPage {
         
         if (!selectedOption) return 5.00;
         
+        // Check for free shipping promo code
+        const promoCode = document.getElementById('promo-code');
+        if (promoCode && promoCode.value.trim()) {
+            const code = promoCode.value.trim().toUpperCase();
+            
+            // Check if this is a free shipping promo using PromoManager
+            if (window.promoManager) {
+                try {
+                    const promoCodes = window.promoManager.getPromoCodes();
+                    const promo = promoCodes.find(p => 
+                        p.code === code && 
+                        p.type === 'free_shipping' &&
+                        p.status === 'active'
+                    );
+                    
+                    if (promo) {
+                        // Validate free shipping promo
+                        const validation = window.promoManager.validatePromoCodeForCart(code, subtotal);
+                        if (validation.valid) {
+                            return 0; // Free shipping
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error checking free shipping promo:', error);
+                }
+            }
+        }
+        
         switch (selectedOption.value) {
             case 'free':
                 return subtotal >= 50 ? 0 : 5.00;
@@ -373,17 +403,36 @@ class CartPage {
         if (!promoCode) return 0;
 
         const code = promoCode.value.trim().toUpperCase();
-        let discount = 0;
+        if (!code) return 0;
 
-        if (code === 'WELCOME10' && subtotal > 0) {
-            discount = subtotal * 0.1;
-        } else if (code === 'FARMER15' && subtotal >= 30) {
-            discount = subtotal * 0.15;
-        } else if (code === 'FIRST5' && subtotal > 0) {
-            discount = 5.00;
+        // Use PromoManager to calculate discount
+        if (window.promoManager) {
+            try {
+                const validation = window.promoManager.validatePromoCodeForCart(code, subtotal);
+                if (validation.valid && validation.promo) {
+                    const promo = validation.promo;
+                    let discount = 0;
+
+                    switch (promo.type) {
+                        case 'percentage':
+                            discount = subtotal * (promo.value / 100);
+                            break;
+                        case 'fixed':
+                            discount = Math.min(promo.value, subtotal);
+                            break;
+                        case 'free_shipping':
+                            discount = 0; // Free shipping handled separately
+                            break;
+                    }
+
+                    return Math.min(discount, subtotal);
+                }
+            } catch (error) {
+                console.error('Error calculating discount with PromoManager:', error);
+            }
         }
 
-        return Math.min(discount, subtotal);
+        return 0;
     }
 
     updateDeliveryAndTotal() {
@@ -449,15 +498,9 @@ class CartPage {
         if (!promoInput) return;
 
         const promoCode = promoInput.value.trim().toUpperCase();
-        const validPromoCodes = ['WELCOME10', 'FARMER15', 'FIRST5'];
         
         if (!promoCode) {
             this.showPromoMessage('Please enter a promo code', 'error');
-            return;
-        }
-
-        if (!validPromoCodes.includes(promoCode)) {
-            this.showPromoMessage('Invalid promo code', 'error');
             return;
         }
 
@@ -475,35 +518,48 @@ class CartPage {
             }
         }
 
-        if (promoCode === 'FARMER15' && subtotal < 30) {
-            this.showPromoMessage('Minimum order of $30 required for this promo', 'error');
-            return;
+        // Use PromoManager to validate the promo code
+        if (window.promoManager) {
+            console.log('Using PromoManager to validate code:', promoCode);
+            
+            try {
+                const validation = window.promoManager.validatePromoCodeForCart(promoCode, subtotal);
+                
+                if (validation.valid) {
+                    this.showPromoMessage('Promo code applied successfully!', 'success');
+                    
+                    // Store the applied promo code for checkout
+                    localStorage.setItem('appliedPromoCode', promoCode);
+                    
+                    this.updateDeliveryAndTotal();
+                    
+                } else {
+                    this.showPromoMessage(validation.message || 'Invalid promo code', 'error');
+                    // Clear any previously applied promo code
+                    localStorage.removeItem('appliedPromoCode');
+                    this.updateDeliveryAndTotal();
+                }
+            } catch (error) {
+                console.error('Error validating promo code with PromoManager:', error);
+                this.showPromoMessage('Error validating promo code. Please try again.', 'error');
+            }
+        } else {
+            console.error('PromoManager not available!');
+            this.showPromoMessage('Promo system not available. Please try again later.', 'error');
         }
-
-        this.showPromoMessage('Promo code applied successfully!', 'success');
-        this.updateDeliveryAndTotal();
     }
 
     showPromoMessage(message, type) {
-        const existingMessage = document.querySelector('.promo-message');
-        if (existingMessage) {
-            existingMessage.remove();
-        }
+        const promoMessage = document.getElementById('promo-message');
+        if (!promoMessage) return;
 
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `promo-message alert alert-${type === 'success' ? 'success' : 'danger'} mt-2`;
-        messageDiv.textContent = message;
-
-        const promoContainer = document.querySelector('.promo-code');
-        if (promoContainer) {
-            promoContainer.appendChild(messageDiv);
-        }
+        promoMessage.textContent = message;
+        promoMessage.className = `alert alert-${type === 'success' ? 'success' : 'danger'} mt-2`;
+        promoMessage.style.display = 'block';
 
         setTimeout(() => {
-            if (messageDiv.parentNode) {
-                messageDiv.remove();
-            }
-        }, 3000);
+            promoMessage.style.display = 'none';
+        }, 5000);
     }
 
     showNotification(message, type = 'success') {
@@ -516,20 +572,41 @@ class CartPage {
             notification = document.createElement('div');
             notification.id = 'cart-page-notification';
             notification.className = 'cart-notification';
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 9999;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                transform: translateX(400px);
+                opacity: 0;
+                transition: all 0.3s ease;
+                border-left: 4px solid ${type === 'success' ? '#28a745' : '#dc3545'};
+            `;
             document.body.appendChild(notification);
         }
         
         const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill';
+        const iconColor = type === 'success' ? '#28a745' : '#dc3545';
+        
         notification.innerHTML = `
-            <i class="bi ${icon}"></i>
+            <i class="bi ${icon}" style="color: ${iconColor};"></i>
             <span class="notification-text">${message}</span>
         `;
         
         notification.className = `cart-notification ${type}`;
-        notification.classList.add('show');
+        notification.style.transform = 'translateX(0)';
+        notification.style.opacity = '1';
         
         setTimeout(() => {
-            notification.classList.remove('show');
+            notification.style.transform = 'translateX(400px)';
+            notification.style.opacity = '0';
         }, 3000);
     }
 

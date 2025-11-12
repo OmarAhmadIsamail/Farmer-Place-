@@ -14,7 +14,7 @@
 
 <body class="admin-body">
   
-  <!-- Sidebar (same as index.html) -->
+  <!-- Sidebar -->
   <nav class="admin-sidebar">
     <div class="sidebar-brand">
       <h4 class="mb-0">Farm Admin</h4>
@@ -38,10 +38,34 @@
         </a>
       </li>
       <li class="nav-item">
+        <a class="nav-link" href="promo-codes.html">
+          <i class="bi bi-tag"></i> Promo Codes
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="messages.html">
+          <i class="bi bi-envelope"></i> Messages
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="blog.html">
+          <i class="bi bi-journal-text"></i> Blog
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="comments.html">
+          <i class="bi bi-chat-dots"></i> Comments
+        </a>
+      </li>
+      <li class="nav-item">
         <a class="nav-link active" href="add-product.html">
           <i class="bi bi-plus-circle"></i> Add Product
         </a>
       </li>
+      <li class="nav-item">
+        <a class="nav-link" href="add-blog.html">
+          <i class="bi bi-plus-square"></i> Add Blog Post
+        </a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="../index.html">
@@ -124,16 +148,16 @@
                 </div>
 
                 <div class="col-md-4">
-                  <!-- Image Upload -->
+                  <!-- Multiple Image Upload Section -->
                   <div class="form-group">
-                    <label>Product Image *</label>
-                    <div class="image-upload-container" id="image-upload-area">
-                      <i class="bi bi-cloud-arrow-up display-4 text-muted mb-3"></i>
-                      <p class="mb-2">Click to upload product image</p>
-                      <small class="text-muted">PNG, JPG up to 5MB</small>
-                      <input type="file" id="product-image" accept="image/*" style="display: none;">
-                      <img id="image-preview" class="image-preview mt-3">
+                    <label class="form-label">Product Images (Max 6)</label>
+                    <div class="upload-area" id="image-upload-area">
+                      <i class="bi bi-cloud-upload display-4 text-muted d-block mb-2"></i>
+                      <p class="mb-1">Click to upload or drag and drop</p>
+                      <small class="upload-info">PNG, JPG, GIF up to 5MB each</small>
+                      <input type="file" id="product-images" multiple accept="image/*" style="display: none;">
                     </div>
+                    <div class="image-preview-grid" id="image-preview"></div>
                   </div>
 
                   <div class="form-group">

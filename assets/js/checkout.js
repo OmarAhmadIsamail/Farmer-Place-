@@ -1,4 +1,4 @@
-// Checkout Functionality - Enhanced with Auth Integration
+// Checkout Functionality - Enhanced with Auth Integration and Promo Code Support
 document.addEventListener('DOMContentLoaded', function() {
     // Check authentication first - REQUIRE LOGIN
     checkAuthStatus();
@@ -67,6 +67,9 @@ function initializeCheckout() {
     
     // Pre-fill user information from logged in user
     prefillUserInfo();
+    
+    // Display applied promo code if any
+    displayAppliedPromoCode();
 }
 
 // Pre-fill user information - Only from logged in user
@@ -102,23 +105,114 @@ function prefillUserInfo() {
     }
 }
 
-// Load order summary
+// Display applied promo code
+function displayAppliedPromoCode() {
+    const appliedPromoCode = localStorage.getItem('appliedPromoCode');
+    if (appliedPromoCode) {
+        // Create promo code display in order summary
+        const promoDisplay = document.createElement('div');
+        promoDisplay.className = 'applied-promo';
+        promoDisplay.innerHTML = `
+            <div class="alert alert-success mt-3">
+                <i class="bi bi-tag me-2"></i>
+                <strong>Promo Code Applied:</strong> ${appliedPromoCode}
+                <button type="button" class="btn-close btn-sm float-end" id="remove-promo-btn"></button>
+            </div>
+        `;
+        
+        const summaryDetails = document.querySelector('.summary-details');
+        if (summaryDetails) {
+            // Insert before the first summary row
+            summaryDetails.insertBefore(promoDisplay, summaryDetails.firstChild);
+            
+            // Add event listener for remove button
+            document.getElementById('remove-promo-btn').addEventListener('click', removePromoCode);
+        }
+    }
+}
+
+// Remove promo code
+function removePromoCode() {
+    localStorage.removeItem('appliedPromoCode');
+    localStorage.removeItem('promoDiscount');
+    loadOrderSummary(); // Reload to update totals
+    
+    // Show message
+    const promoMessage = document.createElement('div');
+    promoMessage.className = 'alert alert-info';
+    promoMessage.innerHTML = '<i class="bi bi-info-circle me-2"></i>Promo code removed';
+    
+    const summaryCard = document.querySelector('.summary-card');
+    if (summaryCard) {
+        summaryCard.insertBefore(promoMessage, summaryCard.querySelector('.summary-details'));
+        
+        // Remove message after 3 seconds
+        setTimeout(() => {
+            promoMessage.remove();
+        }, 3000);
+    }
+}
+
+// Load order summary with promo code support
 function loadOrderSummary() {
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
     const deliveryOption = localStorage.getItem('deliveryOption') || 'standard';
+    const appliedPromoCode = localStorage.getItem('appliedPromoCode');
     
-    // Calculate totals
+    // Calculate base totals
     const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-    const deliveryFee = deliveryOption === 'express' ? 12.00 : 5.00;
+    let deliveryFee = deliveryOption === 'express' ? 12.00 : 5.00;
     const tax = subtotal * 0.08;
-    const total = subtotal + deliveryFee + tax;
+    
+    // Calculate discount using promo manager
+    let discount = 0;
+    let freeShipping = false;
+    
+    if (appliedPromoCode) {
+        const discountResult = calculatePromoDiscount(appliedPromoCode, subtotal);
+        discount = discountResult.discount;
+        freeShipping = discountResult.freeShipping;
+        
+        // Store discount for later use
+        localStorage.setItem('promoDiscount', discount.toString());
+        localStorage.setItem('promoFreeShipping', freeShipping.toString());
+    }
+    
+    // Apply free shipping if promo provides it
+    if (freeShipping) {
+        deliveryFee = 0;
+    }
+    
+    const total = subtotal + deliveryFee + tax - discount;
     
     // Update sidebar
     document.getElementById('sidebar-subtotal').textContent = `$${subtotal.toFixed(2)}`;
     document.getElementById('sidebar-delivery').textContent = `$${deliveryFee.toFixed(2)}`;
     document.getElementById('sidebar-tax').textContent = `$${tax.toFixed(2)}`;
+    
+    // Add discount row if applicable
+    let discountRow = document.getElementById('sidebar-discount');
+    if (!discountRow && discount > 0) {
+        discountRow = document.createElement('div');
+        discountRow.id = 'sidebar-discount';
+        discountRow.className = 'summary-row text-success';
+        const summaryDetails = document.querySelector('.summary-details');
+        const taxRow = document.getElementById('sidebar-tax').closest('.summary-row');
+        summaryDetails.insertBefore(discountRow, taxRow.nextSibling);
+    }
+    
+    if (discount > 0) {
+        discountRow.innerHTML = `<span>Discount:</span><span>-$${discount.toFixed(2)}</span>`;
+        discountRow.style.display = 'flex';
+    } else if (discountRow) {
+        discountRow.style.display = 'none';
+    }
+    
     document.getElementById('sidebar-total').textContent = `$${total.toFixed(2)}`;
     document.getElementById('delivery-time').textContent = deliveryOption === 'express' ? '1 day' : '2-3 days';
+    
+    // Show free shipping badge if applicable
+    updateFreeShippingBadge(freeShipping);
     
     // Load items in sidebar
     const sidebarItems = document.getElementById('sidebar-items');
@@ -137,6 +231,88 @@ function loadOrderSummary() {
     
     // Load items in review step
     loadReviewItems();
+}
+
+// Calculate promo discount using available promo manager
+function calculatePromoDiscount(promoCode, subtotal) {
+    let discount = 0;
+    let freeShipping = false;
+    
+    // Try to use cartPromoManager first, then promoManager
+    const promoManager = window.cartPromoManager || window.promoManager;
+    
+    if (promoManager && typeof promoManager.validatePromoCodeForCart === 'function') {
+        try {
+            const validation = promoManager.validatePromoCodeForCart(promoCode, subtotal);
+            if (validation.valid && validation.promo) {
+                const promo = validation.promo;
+                
+                switch (promo.type) {
+                    case 'percentage':
+                        discount = subtotal * (promo.value / 100);
+                        break;
+                    case 'fixed':
+                        discount = Math.min(promo.value, subtotal);
+                        break;
+                    case 'free_shipping':
+                        freeShipping = true;
+                        discount = 0;
+                        break;
+                }
+            }
+        } catch (error) {
+            console.error('Error calculating promo discount:', error);
+            // Fallback to basic calculation
+            discount = calculateFallbackDiscount(promoCode, subtotal);
+        }
+    } else {
+        // Fallback to basic calculation
+        discount = calculateFallbackDiscount(promoCode, subtotal);
+    }
+    
+    return { discount, freeShipping };
+}
+
+// Fallback discount calculation
+function calculateFallbackDiscount(promoCode, subtotal) {
+    let discount = 0;
+    
+    switch (promoCode.toUpperCase()) {
+        case 'WELCOME10':
+            discount = subtotal * 0.1;
+            break;
+        case 'FARMER15':
+            discount = subtotal >= 30 ? subtotal * 0.15 : 0;
+            break;
+        case 'FIRST5':
+            discount = 5.00;
+            break;
+        default:
+            discount = 0;
+    }
+    
+    return Math.min(discount, subtotal);
+}
+
+// Update free shipping badge
+function updateFreeShippingBadge(freeShipping) {
+    let freeShippingBadge = document.getElementById('free-shipping-badge');
+    
+    if (freeShipping) {
+        if (!freeShippingBadge) {
+            freeShippingBadge = document.createElement('div');
+            freeShippingBadge.id = 'free-shipping-badge';
+            freeShippingBadge.className = 'alert alert-success mt-2';
+            freeShippingBadge.innerHTML = '<i class="bi bi-truck me-2"></i><strong>Free Shipping Applied</strong>';
+            
+            const summaryCard = document.querySelector('.summary-card');
+            if (summaryCard) {
+                summaryCard.insertBefore(freeShippingBadge, summaryCard.querySelector('.summary-details'));
+            }
+        }
+    } else if (freeShippingBadge) {
+        freeShippingBadge.remove();
+    }
 }
 
 // Load items for review step
@@ -158,6 +334,74 @@ function loadReviewItems() {
         `;
         checkoutItems.appendChild(itemElement);
     });
+    
+    // Update totals in review section
+    updateReviewTotals();
+}
+
+// Update totals in review section
+function updateReviewTotals() {
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const deliveryOption = localStorage.getItem('deliveryOption') || 'standard';
+    const appliedPromoCode = localStorage.getItem('appliedPromoCode');
+    
+    const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    let deliveryFee = deliveryOption === 'express' ? 12.00 : 5.00;
+    const tax = subtotal * 0.08;
+    
+    let discount = 0;
+    let freeShipping = false;
+    
+    if (appliedPromoCode) {
+        const discountResult = calculatePromoDiscount(appliedPromoCode, subtotal);
+        discount = discountResult.discount;
+        freeShipping = discountResult.freeShipping;
+    }
+    
+    if (freeShipping) {
+        deliveryFee = 0;
+    }
+    
+    const total = subtotal + deliveryFee + tax - discount;
+    
+    // Create or update totals display
+    let totalsDisplay = document.getElementById('review-totals');
+    if (!totalsDisplay) {
+        totalsDisplay = document.createElement('div');
+        totalsDisplay.id = 'review-totals';
+        totalsDisplay.className = 'review-totals mt-3';
+        document.getElementById('checkout-items').parentNode.appendChild(totalsDisplay);
+    }
+    
+    totalsDisplay.innerHTML = `
+        <div class="review-total-row">
+            <span>Subtotal:</span>
+            <span>$${subtotal.toFixed(2)}</span>
+        </div>
+        ${discount > 0 ? `
+        <div class="review-total-row text-success">
+            <span>Discount:</span>
+            <span>-$${discount.toFixed(2)}</span>
+        </div>
+        ` : ''}
+        <div class="review-total-row">
+            <span>Delivery Fee:</span>
+            <span>$${deliveryFee.toFixed(2)}</span>
+        </div>
+        <div class="review-total-row">
+            <span>Tax:</span>
+            <span>$${tax.toFixed(2)}</span>
+        </div>
+        <div class="review-total-row total">
+            <strong>Total:</strong>
+            <strong>$${total.toFixed(2)}</strong>
+        </div>
+        ${freeShipping ? `
+        <div class="review-total-row text-success">
+            <small><i class="bi bi-check-circle me-1"></i>Free shipping applied</small>
+        </div>
+        ` : ''}
+    `;
 }
 
 // Setup event listeners
@@ -518,7 +762,7 @@ function handleOrderSubmit(e) {
     placeOrder();
 }
 
-// Enhanced placeOrder function - Only for logged in users
+// Enhanced placeOrder function with promo code support
 function placeOrder() {
     if (!validateReview()) {
         return;
@@ -537,12 +781,27 @@ function placeOrder() {
     const paymentMethod = localStorage.getItem('paymentMethod');
     const deliveryLocation = JSON.parse(localStorage.getItem('deliveryLocation') || '{}');
     const deliveryOption = localStorage.getItem('deliveryOption') || 'standard';
+    const appliedPromoCode = localStorage.getItem('appliedPromoCode');
     
-    // Calculate totals
+    // Calculate totals with promo discount
     const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-    const deliveryFee = deliveryOption === 'express' ? 12.00 : 5.00;
+    let deliveryFee = deliveryOption === 'express' ? 12.00 : 5.00;
     const tax = subtotal * 0.08;
-    const total = subtotal + deliveryFee + tax;
+    
+    let discount = 0;
+    let freeShipping = false;
+    
+    if (appliedPromoCode) {
+        const discountResult = calculatePromoDiscount(appliedPromoCode, subtotal);
+        discount = discountResult.discount;
+        freeShipping = discountResult.freeShipping;
+    }
+    
+    if (freeShipping) {
+        deliveryFee = 0;
+    }
+    
+    const total = subtotal + deliveryFee + tax - discount;
     
     // Get user info from session storage
     const userData = JSON.parse(sessionStorage.getItem('userData'));
@@ -565,8 +824,10 @@ function placeOrder() {
             subtotal: subtotal,
             tax: tax,
             delivery: deliveryFee,
+            discount: discount,
             total: total
         },
+        promoCode: appliedPromoCode || null,
         status: 'pending',
         authType: 'registered'
     };
@@ -576,14 +837,48 @@ function placeOrder() {
     orders.push(order);
     localStorage.setItem('orders', JSON.stringify(orders));
     
-    // Clear cart
+    // Increment promo code usage if applicable
+    if (appliedPromoCode) {
+        incrementPromoUsage(appliedPromoCode);
+    }
+    
+    // Clear cart and promo data
     localStorage.removeItem('cart');
+    localStorage.removeItem('appliedPromoCode');
+    localStorage.removeItem('promoDiscount');
+    localStorage.removeItem('promoFreeShipping');
     
     // Update cart counter
     updateCartCounter();
     
     // Show success modal for registered user
     showSuccessModal(order);
+}
+
+// Increment promo code usage
+function incrementPromoUsage(promoCode) {
+    const promoManager = window.cartPromoManager || window.promoManager;
+    
+    if (promoManager && typeof promoManager.getPromoCodes === 'function') {
+        try {
+            const promoCodes = promoManager.getPromoCodes();
+            const promo = promoCodes.find(p => p.code === promoCode);
+            
+            if (promo) {
+                promo.usedCount = (promo.usedCount || 0) + 1;
+                
+                // Save updated promo codes
+                if (typeof promoManager.savePromoCodes === 'function') {
+                    promoManager.savePromoCodes();
+                } else {
+                    // Fallback: save directly to localStorage
+                    localStorage.setItem('promoCodes', JSON.stringify(promoCodes));
+                }
+            }
+        } catch (error) {
+            console.error('Error incrementing promo usage:', error);
+        }
+    }
 }
 
 // Success modal for registered users
@@ -597,9 +892,18 @@ function showSuccessModal(order) {
     // Success message for registered users
     const successMessage = document.getElementById('success-message');
     if (successMessage) {
+        let promoMessage = '';
+        if (order.promoCode) {
+            promoMessage = `<div class="alert alert-success mt-2">
+                <i class="bi bi-tag me-2"></i>
+                Promo code <strong>${order.promoCode}</strong> applied - Saved $${order.totals.discount.toFixed(2)}
+            </div>`;
+        }
+        
         successMessage.innerHTML = `
             <p class="mb-3">Thank you for your order! Your order has been confirmed and will be processed shortly.</p>
-            <div class="alert alert-success">
+            ${promoMessage}
+            <div class="alert alert-info">
                 <i class="bi bi-check-circle me-2"></i>
                 You can track your order in your account at any time.
             </div>

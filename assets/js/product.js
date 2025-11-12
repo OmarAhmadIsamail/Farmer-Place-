@@ -45,14 +45,20 @@ class ProductDisplay {
 
     createProductCard(product) {
         const col = document.createElement('div');
-        col.className = 'col-xl-3 col-md-6';
+        col.className = 'product-item';
         col.setAttribute('data-aos', 'fade-up');
         col.setAttribute('data-category', product.category);
-
+    
+        // Use first image for product listing
+        const displayImage = product.image || 
+                            (product.images && product.images[0]) || 
+                            'assets/img/placeholder.jpg';
+    
         col.innerHTML = `
             <div class="card product-card">
                 <div class="product-image-container">
-                    <img src="${product.image}" class="card-img product-image" alt="${product.name}">
+                    <img src="${displayImage}" class="card-img product-image" alt="${product.name}" 
+                         onerror="this.src='assets/img/placeholder.jpg'">
                 </div>
                 <div class="card-body">
                     <span class="product-category">${this.formatCategory(product.category)}</span>
@@ -79,9 +85,10 @@ class ProductDisplay {
                 </div>
             </div>
         `;
-
+    
         return col;
     }
+    
 
     setupEventListeners() {
         // Filter buttons

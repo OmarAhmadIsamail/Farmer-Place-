@@ -125,11 +125,48 @@ class ProductDetails {
         }
     }
 
+    // Update loadProductImages method to handle multiple images
     loadProductImages() {
         try {
             const swiperWrapper = document.querySelector('.swiper-wrapper');
             if (swiperWrapper) {
-                // Use main image or fallback to first image in images array
+                swiperWrapper.innerHTML = '';
+                
+                // Get all images or use main image as fallback
+                const productImages = this.currentProduct.images && this.currentProduct.images.length > 0 
+                    ? this.currentProduct.images 
+                    : [this.currentProduct.image || 'assets/img/placeholder.jpg'];
+                
+                // Create slides for each image
+                productImages.forEach((imageSrc, index) => {
+                    const slide = document.createElement('div');
+                    slide.className = 'swiper-slide';
+                    slide.innerHTML = `
+                        <div class="product-detail-image-container">
+                            <img src="${imageSrc}" 
+                                 class="product-detail-image" 
+                                 alt="${this.currentProduct.name} - Image ${index + 1}"
+                                 onerror="this.src='assets/img/placeholder.jpg'">
+                        </div>
+                    `;
+                    swiperWrapper.appendChild(slide);
+                });
+                
+                // Reinitialize swiper with multiple images
+                this.initializeSwiper();
+            }
+        } catch (error) {
+            console.error('Error loading product images:', error);
+            // Fallback to single image
+            this.loadSingleImage();
+        }
+    }
+
+    // Fallback method for single image
+    loadSingleImage() {
+        try {
+            const swiperWrapper = document.querySelector('.swiper-wrapper');
+            if (swiperWrapper) {
                 const mainImage = this.currentProduct.image || 
                                 (this.currentProduct.images && this.currentProduct.images[0]) || 
                                 'assets/img/placeholder.jpg';
@@ -137,29 +174,43 @@ class ProductDetails {
                 swiperWrapper.innerHTML = `
                     <div class="swiper-slide">
                         <div class="product-detail-image-container">
-                            <img src="${mainImage}" class="product-detail-image" alt="${this.currentProduct.name}" onerror="this.src='assets/img/placeholder.jpg'">
+                            <img src="${mainImage}" 
+                                 class="product-detail-image" 
+                                 alt="${this.currentProduct.name}"
+                                 onerror="this.src='assets/img/placeholder.jpg'">
                         </div>
                     </div>
                 `;
                 
-                // Reinitialize swiper
+                // Reinitialize swiper for single image
                 this.initializeSwiper();
             }
         } catch (error) {
-            console.error('Error loading product images:', error);
+            console.error('Error loading single image:', error);
         }
     }
 
+    // Update initializeSwiper to handle multiple images properly
     initializeSwiper() {
         try {
             if (typeof Swiper !== 'undefined') {
-                new Swiper('.product-details-slider', {
-                    loop: true,
+                const swiperContainer = document.querySelector('.product-details-slider');
+                if (!swiperContainer) return;
+
+                // Destroy existing swiper instance if any
+                if (swiperContainer.swiper) {
+                    swiperContainer.swiper.destroy();
+                }
+
+                // Get number of images
+                const slideCount = document.querySelectorAll('.swiper-slide').length;
+                
+                const swiperConfig = {
+                    loop: slideCount > 1, // Only loop if multiple images
                     speed: 600,
-                    autoplay: {
-                        delay: 5000
-                    },
-                    slidesPerView: 'auto',
+                    autoplay: slideCount > 1 ? { delay: 5000 } : false, // Only autoplay if multiple images
+                    slidesPerView: 1,
+                    spaceBetween: 0,
                     navigation: {
                         nextEl: '.swiper-button-next',
                         prevEl: '.swiper-button-prev'
@@ -168,8 +219,31 @@ class ProductDetails {
                         el: '.swiper-pagination',
                         type: 'bullets',
                         clickable: true
+                    },
+                    effect: slideCount > 1 ? 'slide' : 'fade', // Use fade effect for single image
+                    fadeEffect: {
+                        crossFade: true
                     }
-                });
+                };
+
+                // Hide navigation and pagination if only one image
+                if (slideCount <= 1) {
+                    swiperConfig.navigation = false;
+                    swiperConfig.pagination = false;
+                }
+
+                new Swiper('.product-details-slider', swiperConfig);
+
+                // Hide navigation elements if only one image
+                if (slideCount <= 1) {
+                    const prevBtn = document.querySelector('.swiper-button-prev');
+                    const nextBtn = document.querySelector('.swiper-button-next');
+                    const pagination = document.querySelector('.swiper-pagination');
+                    
+                    if (prevBtn) prevBtn.style.display = 'none';
+                    if (nextBtn) nextBtn.style.display = 'none';
+                    if (pagination) pagination.style.display = 'none';
+                }
             }
         } catch (error) {
             console.error('Error initializing swiper:', error);

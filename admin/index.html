@@ -20,42 +20,66 @@
 
 <body class="admin-body">
   
-  <!-- Sidebar -->
-  <nav class="admin-sidebar">
-    <div class="sidebar-brand">
-      <h4 class="mb-0">Farm Admin</h4>
-      <small class="text-muted">Dashboard</small>
-    </div>
-    
-    <ul class="sidebar-nav">
-      <li class="nav-item">
-        <a class="nav-link active" href="index.html">
-          <i class="bi bi-speedometer2"></i> Dashboard
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="products.html">
-          <i class="bi bi-box-seam"></i> Products
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="orders.html">
-          <i class="bi bi-cart-check"></i> Orders
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="add-product.html">
-          <i class="bi bi-plus-circle"></i> Add Product
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="../index.html">
-          <i class="bi bi-house"></i> Back to Site
-        </a>
-      </li>
-    </ul>
-  </nav>
-
+ <!-- Sidebar -->
+ <nav class="admin-sidebar">
+  <div class="sidebar-brand">
+    <h4 class="mb-0">Farm Admin</h4>
+    <small class="text-muted">Dashboard</small>
+  </div>
+  
+  <ul class="sidebar-nav">
+    <li class="nav-item">
+      <a class="nav-link active" href="index.html">
+        <i class="bi bi-speedometer2"></i> Dashboard
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="products.html">
+        <i class="bi bi-box-seam"></i> Products
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="orders.html">
+        <i class="bi bi-cart-check"></i> Orders
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="promo-codes.html">
+        <i class="bi bi-tag"></i> Promo Codes
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="messages.html">
+        <i class="bi bi-envelope"></i> Messages
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="blog.html">
+        <i class="bi bi-journal-text"></i> Blog
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="comments.html">
+        <i class="bi bi-chat-dots"></i> Comments
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="add-product.html">
+        <i class="bi bi-plus-circle"></i> Add Product
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="add-blog.html">
+        <i class="bi bi-plus-square"></i> Add Blog Post
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="../index.html">
+        <i class="bi bi-house"></i> Back to Site
+      </a>
+    </li>
+  </ul>
+</nav>
   <!-- Main Content -->
   <main class="admin-main">
     <div class="admin-header">
@@ -127,6 +151,114 @@
       </div>
     </div>
   </main>
+
+  <!-- Edit Product Modal -->
+  <div class="edit-modal" id="edit-product-modal">
+    <div class="edit-modal-content">
+      <div class="edit-modal-header">
+        <h4 class="mb-0">Edit Product</h4>
+        <button class="close-modal" onclick="productManager.closeEditModal()">&times;</button>
+      </div>
+      <div class="edit-modal-body">
+        <form id="edit-product-form">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="edit-product-name" class="form-label">Product Name *</label>
+                <input type="text" class="form-control" id="edit-product-name" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="edit-product-category" class="form-label">Category *</label>
+                <select class="form-control" id="edit-product-category" required>
+                  <option value="fruit">Fruit</option>
+                  <option value="vegetable">Vegetable</option>
+                  <option value="seed">Seeds</option>
+                  <option value="meat">Meat</option>
+                  <option value="equipment">Equipment</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="edit-product-price" class="form-label">Price ($) *</label>
+                <input type="number" class="form-control" id="edit-product-price" step="0.01" min="0" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="edit-product-status" class="form-label">Status</label>
+                <select class="form-control" id="edit-product-status">
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="edit-product-description" class="form-label">Description *</label>
+            <textarea class="form-control" id="edit-product-description" rows="3" required></textarea>
+          </div>
+
+          <!-- Multiple Image Upload for Edit -->
+          <div class="image-upload-container">
+            <label class="form-label">Product Images (Max 6)</label>
+            <div class="upload-area" id="edit-image-upload-area">
+              <i class="bi bi-cloud-upload display-4 text-muted d-block mb-2"></i>
+              <p class="mb-1">Click to upload or drag and drop</p>
+              <small class="upload-info">PNG, JPG, GIF up to 5MB each</small>
+              <input type="file" id="edit-product-images" multiple accept="image/*" style="display: none;">
+            </div>
+            <div class="image-preview-grid" id="edit-image-preview"></div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="edit-product-weight" class="form-label">Weight/Package</label>
+                <input type="text" class="form-control" id="edit-product-weight">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="edit-product-origin" class="form-label">Origin</label>
+                <input type="text" class="form-control" id="edit-product-origin">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="edit-product-shelf-life" class="form-label">Shelf Life</label>
+                <input type="text" class="form-control" id="edit-product-shelf-life">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3 form-check" style="margin-top: 2rem;">
+                <input type="checkbox" class="form-check-input" id="edit-product-organic">
+                <label class="form-check-label" for="edit-product-organic">Organic Product</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="edit-product-features" class="form-label">Features (one per line)</label>
+            <textarea class="form-control" id="edit-product-features" rows="3"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="edit-modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="productManager.closeEditModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="productManager.updateProduct()">Update Product</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Vendor JS Files -->
   <script src="../assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>

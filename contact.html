@@ -1,13 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<!DOCTYPE html>
-<html lang="en">
-
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>Index - EstateAgency Bootstrap Template</title>
+  <title>Contact - EstateAgency Bootstrap Template</title>
   <meta name="description" content="">
   <meta name="keywords" content="">
 
@@ -35,23 +32,6 @@
   
   <!-- Header will be loaded here -->
   <div id="header-container"></div>
-
-  <!-- Your page content here -->
-  <main>
-    <!-- Page specific content -->
-  </main>
-
-  <!-- Component Loader Script -->
-  <script src="assets/js/components.js"></script>
-  
-  <!-- Your existing scripts -->
-  <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="assets/vendor/aos/aos.js"></script>
-  <script src="assets/vendor/swiper/swiper-bundle.min.js"></script>
-  <script src="assets/js/main.js"></script>
-
-</body>
-</html>
 
   <main class="main">
 
@@ -115,30 +95,31 @@
 
           </div>
 
+          <!-- Updated Contact Form -->
           <div class="col-lg-8">
-            <form action="forms/contact.php" method="post" class="php-email-form" data-aos="fade-up" data-aos-delay="200">
+            <form id="contact-form" class="php-email-form" data-aos="fade-up" data-aos-delay="200">
               <div class="row gy-4">
 
                 <div class="col-md-6">
-                  <input type="text" name="name" class="form-control" placeholder="Your Name" required="">
+                  <input type="text" name="name" class="form-control" placeholder="Your Name" required>
                 </div>
 
-                <div class="col-md-6 ">
-                  <input type="email" class="form-control" name="email" placeholder="Your Email" required="">
-                </div>
-
-                <div class="col-md-12">
-                  <input type="text" class="form-control" name="subject" placeholder="Subject" required="">
+                <div class="col-md-6">
+                  <input type="email" class="form-control" name="email" placeholder="Your Email" required>
                 </div>
 
                 <div class="col-md-12">
-                  <textarea class="form-control" name="message" rows="6" placeholder="Message" required=""></textarea>
+                  <input type="text" class="form-control" name="subject" placeholder="Subject" required>
+                </div>
+
+                <div class="col-md-12">
+                  <textarea class="form-control" name="message" rows="6" placeholder="Message" required></textarea>
                 </div>
 
                 <div class="col-md-12 text-center">
-                  <div class="loading">Loading</div>
+                  <div class="loading"></div>
                   <div class="error-message"></div>
-                  <div class="sent-message">Your message has been sent. Thank you!</div>
+                  <div class="sent-message"></div>
 
                   <button type="submit">Send Message</button>
                 </div>
@@ -155,40 +136,18 @@
 
   </main>
 
-  <!DOCTYPE html>
-<html lang="en">
-<head>
-  <!-- Your head content remains the same -->
-</head>
-<body class="index-page">
-  
-  <!-- Header will be loaded here -->
-  <div id="header-container"></div>
-
-  <main>
-    <!-- Your page content here -->
-  </main>
-
   <!-- Footer will be loaded here -->
   <div id="footer-container"></div>
 
-  <!-- Component Loader Script -->
-  <script src="assets/js/components.js"></script>
-  
-  <!-- Your existing scripts -->
-  <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="assets/vendor/aos/aos.js"></script>
-  <script src="assets/vendor/swiper/swiper-bundle.min.js"></script>
-  <script src="assets/js/main.js"></script>
-
-</body>
-</html>
   <!-- Scroll Top -->
   <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 
   <!-- Preloader -->
   <div id="preloader"></div>
 
+  <!-- Component Loader Script -->
+  <script src="assets/js/components.js"></script>
+  
   <!-- Vendor JS Files -->
   <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
   <script src="assets/vendor/php-email-form/validate.js"></script>
@@ -199,6 +158,7 @@
   <!-- Main JS File -->
   <script src="assets/js/main.js"></script>
   <script src="assets/js/auth.js"></script>
+  <script src="assets/js/contact.js"></script>
 
 </body>
 
