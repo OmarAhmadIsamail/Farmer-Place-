@@ -1145,10 +1145,6 @@ textarea.form-control {
   border-radius: 10px 10px 0 0;
 }
 
-.modal-header .btn-close {
-  /* Remove the filter since we're not using white text anymore */
-}
-
 .modal-title {
   font-weight: 600;
 }
